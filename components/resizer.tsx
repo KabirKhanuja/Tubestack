@@ -56,10 +56,16 @@ export function Resizer({ onDrag, onCommit, ariaLabel = "Resize panel" }: Props)
       onPointerMove={onPointerMove}
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
-      className="relative z-10 w-0.5 shrink-0 cursor-col-resize bg-black/80 transition-colors hover:bg-red-500 dark:bg-zinc-100/80"
+      className="group relative z-10 w-1 shrink-0 cursor-col-resize bg-black transition-colors hover:bg-red-500 dark:bg-zinc-100"
     >
       {/* Hit area expander */}
       <div className="absolute inset-y-0 -left-1.5 -right-1.5" aria-hidden />
+
+      {/* Visual handle indicator */}
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 h-7 w-4 -translate-x-1/2 -translate-y-1/2 border-2 border-black bg-white opacity-80 transition-opacity group-hover:opacity-100 dark:border-zinc-100 dark:bg-zinc-950"
+      />
     </div>
   );
 }

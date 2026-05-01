@@ -545,7 +545,7 @@ export default function Home() {
           />
 
           {activeVideo && (
-            <div className="flex items-start justify-between gap-2 border-2 border-black bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
+            <div className="mx-2 flex items-start justify-between gap-2 border-2 border-black bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
               <div className="min-w-0 flex-1">
                 <h2 className="text-sm font-black leading-tight uppercase">
                   {activeVideo.title}
