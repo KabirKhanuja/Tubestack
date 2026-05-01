@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "tubestack:v1";
 
@@ -24,10 +24,22 @@ export function saveToStorage<T>(value: T): void {
   }
 }
 
-export function usePersistentState<T>(initial: T): [T, React.Dispatch<React.SetStateAction<T>>, boolean] {
+export function clearStorage(): void {
+  if (typeof window === "undefined") return;
+  try {
+    window.localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+export function usePersistentState<T>(
+  initial: T
+): [T, React.Dispatch<React.SetStateAction<T>>, boolean, () => void] {
   const [state, setState] = useState<T>(initial);
   const [hydrated, setHydrated] = useState(false);
   const skipNextSave = useRef(true);
+  const initialRef = useRef(initial);
 
   useEffect(() => {
     const stored = loadFromStorage<T | null>(null as T | null);
@@ -49,5 +61,13 @@ export function usePersistentState<T>(initial: T): [T, React.Dispatch<React.SetS
     if (hydrated) skipNextSave.current = false;
   }, [hydrated]);
 
-  return [state, setState, hydrated];
+  // Wipe localStorage and reset to initial — suppresses the autosave that would
+  // otherwise re-persist the cleared state on the next render.
+  const reset = useCallback(() => {
+    skipNextSave.current = true;
+    clearStorage();
+    setState(initialRef.current);
+  }, []);
+
+  return [state, setState, hydrated, reset];
 }
