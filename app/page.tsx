@@ -16,6 +16,7 @@ import {
   type PendingVideo,
 } from "@/components/category-picker-modal";
 import { usePersistentState } from "@/lib/storage";
+import { clearStorage } from "@/lib/storage";
 import { reorder } from "@/lib/dnd";
 import {
   DEFAULT_CATEGORIES,
@@ -82,7 +83,7 @@ function slug(name: string): string {
 }
 
 export default function Home() {
-  const [state, setState, hydrated] = usePersistentState<TubestackState>(
+  const [state, setState, hydrated, resetState] = usePersistentState<TubestackState>(
     INITIAL_STATE
   );
 
@@ -250,9 +251,10 @@ export default function Home() {
   );
 
   const clearAll = useCallback(() => {
-    setState((s) => ({ ...s, videos: [], activeVideoId: null }));
-    toast.success("Cleared all videos");
-  }, [setState]);
+    resetState();
+    lastSaveRef.current = {};
+    toast.success("Cleared all memory");
+  }, [resetState]);
 
   /* ---------- Videos ---------- */
 
