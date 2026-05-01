@@ -29,19 +29,23 @@ export function QueuePanel({
   const dnd = useDragReorder(onReorder);
 
   return (
-    <div className="flex h-full w-full flex-col border-l border-zinc-200 bg-zinc-50/80 dark:border-zinc-800 dark:bg-zinc-950/60">
-      <div className="flex items-center justify-between border-b border-zinc-200 px-4 py-3 dark:border-zinc-800">
-        <h2 className="text-sm font-semibold tracking-tight">Queue</h2>
-        <span className="text-xs text-zinc-500">
-          {videos.length} {videos.length === 1 ? "video" : "videos"}
+    <div className="flex h-full w-full flex-col border-l-2 border-black bg-stone-50 dark:border-zinc-100 dark:bg-zinc-950">
+      <div className="flex items-center justify-between border-b-2 border-black bg-yellow-300 px-3 py-1.5 dark:border-zinc-100 dark:text-black">
+        <h2 className="text-sm font-black uppercase tracking-tight">Queue</h2>
+        <span className="font-mono text-xs font-bold">
+          {videos.length.toString().padStart(2, "0")}
         </span>
       </div>
 
       <ScrollArea className="flex-1">
         {videos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center gap-2 px-6 py-16 text-center text-sm text-zinc-500">
-            <p>{emptyMessage ?? "No videos yet."}</p>
-            <p className="text-xs">Paste a YouTube URL to add one.</p>
+          <div className="flex flex-col items-center justify-center gap-1 px-4 py-12 text-center">
+            <p className="text-sm font-bold uppercase">
+              {emptyMessage ?? "Empty queue"}
+            </p>
+            <p className="font-mono text-[10px] uppercase opacity-60">
+              Paste a URL above
+            </p>
           </div>
         ) : (
           <ul className="flex flex-col" onDragEnd={dnd.onDragEnd}>
@@ -65,34 +69,34 @@ export function QueuePanel({
                   onDragOver={dnd.onDragOver(v.id)}
                   onDragLeave={dnd.onDragLeave(v.id)}
                   onDrop={dnd.onDrop(v.id)}
-                  className={`group relative border-b border-zinc-200 transition-colors dark:border-zinc-800 ${
+                  className={`group relative border-b-2 border-black transition-colors dark:border-zinc-100 ${
                     active
-                      ? "bg-red-50 dark:bg-red-950/20"
-                      : "hover:bg-zinc-100 dark:hover:bg-zinc-900/60"
+                      ? "bg-yellow-200 dark:bg-yellow-300/20"
+                      : "bg-white hover:bg-stone-100 dark:bg-zinc-900 dark:hover:bg-zinc-800"
                   } ${dragging ? "opacity-40" : ""} ${
-                    dropTarget ? "border-t-2 border-t-red-500" : ""
+                    dropTarget ? "border-t-4 border-t-red-500" : ""
                   }`}
                 >
-                  <div className="flex items-start gap-2 p-3">
-                    <div
-                      className="mt-1 flex cursor-grab items-center text-zinc-400 hover:text-zinc-700 active:cursor-grabbing dark:hover:text-zinc-200"
+                  <div className="flex items-start gap-1.5 p-2">
+                    <span
+                      className="mt-1 flex cursor-grab items-center text-black/40 active:cursor-grabbing dark:text-zinc-400"
                       aria-hidden
                     >
-                      <GripVertical className="h-4 w-4" />
-                    </div>
+                      <GripVertical className="h-3.5 w-3.5" />
+                    </span>
                     <Checkbox
                       checked={v.completed}
                       onCheckedChange={(c) => onComplete(v.id, c === true)}
                       onClick={(e) => e.stopPropagation()}
-                      className="mt-1"
+                      className="mt-1 border-2 border-black"
                       aria-label="Mark complete"
                     />
                     <button
                       type="button"
                       onClick={() => onSelect(v.id)}
-                      className="flex flex-1 gap-3 text-left"
+                      className="flex flex-1 gap-2 text-left"
                     >
-                      <div className="relative h-14 w-24 shrink-0 overflow-hidden rounded bg-zinc-200 dark:bg-zinc-800">
+                      <div className="relative h-12 w-20 shrink-0 overflow-hidden border-2 border-black bg-stone-200 dark:border-zinc-100">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
                           src={v.thumbnail || thumbnailUrl(v.videoId)}
@@ -102,51 +106,47 @@ export function QueuePanel({
                           draggable={false}
                         />
                         {v.durationSeconds > 0 && (
-                          <span className="absolute bottom-1 right-1 rounded bg-black/80 px-1 text-[10px] font-medium text-white">
+                          <span className="absolute bottom-0 right-0 bg-black px-1 font-mono text-[9px] font-bold text-white">
                             {formatDuration(v.durationSeconds)}
                           </span>
                         )}
                       </div>
-                      <div className="flex min-w-0 flex-1 flex-col gap-1">
+                      <div className="flex min-w-0 flex-1 flex-col gap-0.5">
                         <p
-                          className={`line-clamp-2 text-sm leading-snug ${
-                            v.completed
-                              ? "text-zinc-400 line-through"
-                              : active
-                              ? "font-medium"
-                              : ""
+                          className={`line-clamp-2 text-xs leading-tight font-bold ${
+                            v.completed ? "text-black/40 line-through" : ""
                           }`}
                         >
                           {v.title}
                         </p>
                         {v.author && (
-                          <p className="truncate text-xs text-zinc-500">
+                          <p className="truncate font-mono text-[10px] uppercase opacity-60">
                             {v.author}
                           </p>
                         )}
-                        <div className="mt-1 flex items-center gap-2">
-                          <div className="h-1 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                        <div className="mt-0.5 flex items-center gap-1.5">
+                          <div className="h-1.5 flex-1 border border-black bg-white dark:border-zinc-100 dark:bg-zinc-800">
                             <div
-                              className="h-full rounded-full bg-red-600 transition-[width] duration-500"
+                              className="h-full bg-red-600 transition-[width] duration-500"
                               style={{ width: `${pct}%` }}
                             />
                           </div>
-                          <span className="shrink-0 text-[10px] tabular-nums text-zinc-500">
+                          <span className="shrink-0 font-mono text-[9px] font-bold tabular-nums">
                             {Math.round(pct)}%
                           </span>
                         </div>
                       </div>
                     </button>
-                    <div className="flex flex-col items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                    <div className="flex flex-col items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
                       <a
                         href={canonicalUrl(v.videoId)}
                         target="_blank"
                         rel="noopener noreferrer"
                         title="Watch on YouTube"
-                        className="rounded p-1 text-zinc-400 hover:bg-zinc-200 hover:text-red-600 dark:hover:bg-zinc-800"
+                        className="border-2 border-black p-0.5 hover:bg-red-500 hover:text-white dark:border-zinc-100"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        <ExternalLink className="h-4 w-4" />
+                        <ExternalLink className="h-3 w-3" />
                       </a>
                       <button
                         type="button"
@@ -156,9 +156,9 @@ export function QueuePanel({
                         }}
                         aria-label="Remove video"
                         title="Remove"
-                        className="rounded p-1 text-zinc-400 hover:bg-zinc-200 hover:text-red-600 dark:hover:bg-zinc-800"
+                        className="border-2 border-black p-0.5 hover:bg-red-500 hover:text-white dark:border-zinc-100"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-3 w-3" />
                       </button>
                     </div>
                   </div>

@@ -1,23 +1,25 @@
 import type { Metadata } from "next";
 import Script from "next/script";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Poppins, Courier_Prime } from "next/font/google";
 import { Providers } from "@/components/providers";
 import { themeInitScript } from "@/components/theme-provider";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const poppins = Poppins({
+  variable: "--font-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const courier = Courier_Prime({
+  variable: "--font-mono",
   subsets: ["latin"],
+  weight: ["400", "700"],
 });
 
 export const metadata: Metadata = {
-  title: "Tubestack — Distraction-free YouTube manager",
-  description: "Organize YouTube videos by category and track watch progress.",
+  title: "TUBESTACK",
+  description: "Distraction-free YouTube video manager.",
 };
 
 export default function RootLayout({
@@ -29,7 +31,7 @@ export default function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${poppins.variable} ${courier.variable} h-full antialiased`}
     >
       <head>
         <Script id="theme-init" strategy="beforeInteractive">
@@ -38,7 +40,7 @@ export default function RootLayout({
       </head>
       <body
         suppressHydrationWarning
-        className="min-h-full flex flex-col bg-zinc-100 dark:bg-zinc-900"
+        className="min-h-full flex flex-col bg-stone-100 text-black dark:bg-zinc-950 dark:text-zinc-100"
       >
         <Providers>{children}</Providers>
       </body>

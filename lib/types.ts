@@ -17,11 +17,22 @@ export type Video = {
   addedAt: number;
 };
 
+export type Layout = {
+  sidebarWidth: number;
+  queueWidth: number;
+};
+
+export const DEFAULT_LAYOUT: Layout = {
+  sidebarWidth: 220,
+  queueWidth: 320,
+};
+
 export type TubestackState = {
   categories: Category[];
   videos: Video[];
   activeCategoryId: string;
   activeVideoId: string | null;
+  layout: Layout;
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [

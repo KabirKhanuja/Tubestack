@@ -4,13 +4,10 @@ import { useState } from "react";
 import {
   ChevronDown,
   GripVertical,
-  Layers,
   Plus,
   Trash2,
   X,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDragReorder } from "@/lib/dnd";
 import type { Category } from "@/lib/types";
@@ -55,9 +52,7 @@ export function CategorySidebar({
   function handleDeleteClick(id: string) {
     const count = counts[id] ?? 0;
     if (count === 0) {
-      if (window.confirm("Delete this category?")) {
-        onRemove(id, null);
-      }
+      if (window.confirm("Delete this category?")) onRemove(id, null);
       return;
     }
     setPendingDelete(id);
@@ -72,10 +67,10 @@ export function CategorySidebar({
     : [];
 
   return (
-    <aside className="flex h-full w-full flex-col gap-4 border-r border-zinc-200 bg-zinc-50/80 p-4 dark:border-zinc-800 dark:bg-zinc-950/60">
-      <div className="flex items-center gap-2 px-1 pt-1">
-        <Layers className="h-5 w-5 text-red-600" />
-        <h1 className="text-lg font-semibold tracking-tight">Tubestack</h1>
+    <aside className="flex h-full w-full flex-col gap-2 border-r-2 border-black bg-stone-50 p-2 dark:border-zinc-100 dark:bg-zinc-950">
+      <div className="flex items-center justify-between border-2 border-black bg-yellow-300 px-2 py-1.5 dark:border-zinc-100 dark:text-black">
+        <h1 className="text-base font-black tracking-tight uppercase">Tubestack</h1>
+        <span className="font-mono text-[10px] font-bold">v1</span>
       </div>
 
       <ScrollArea className="-mx-1 flex-1 px-1">
@@ -83,14 +78,14 @@ export function CategorySidebar({
           <button
             type="button"
             onClick={() => onSelect("__all__")}
-            className={`group flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors ${
+            className={`flex h-8 items-center justify-between border-2 border-black px-2 text-sm font-bold uppercase transition-colors dark:border-zinc-100 ${
               activeId === "__all__"
-                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                : "hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60"
+                ? "bg-black text-white dark:bg-zinc-100 dark:text-black"
+                : "bg-white hover:bg-stone-200 dark:bg-zinc-900 dark:hover:bg-zinc-800"
             }`}
           >
-            <span className="font-medium">All</span>
-            <span className="text-xs opacity-70">{totalCount}</span>
+            <span>All</span>
+            <span className="font-mono text-xs">{totalCount}</span>
           </button>
 
           {categories.map((c) => {
@@ -107,12 +102,16 @@ export function CategorySidebar({
                 onDragOver={dnd.onDragOver(c.id)}
                 onDragLeave={dnd.onDragLeave(c.id)}
                 onDrop={dnd.onDrop(c.id)}
-                className={`group relative flex items-center rounded-md ${
-                  dragging ? "opacity-40" : ""
-                } ${dropTarget ? "ring-2 ring-red-500" : ""}`}
+                className={`group relative flex h-8 items-center border-2 transition-all ${
+                  active
+                    ? "border-black bg-black text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black"
+                    : "border-black bg-white hover:bg-stone-200 dark:border-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+                } ${dragging ? "opacity-40" : ""} ${
+                  dropTarget ? "translate-y-px brutal-shadow-sm" : ""
+                }`}
               >
                 <span
-                  className="flex cursor-grab items-center pl-1 pr-0.5 text-zinc-400 active:cursor-grabbing"
+                  className="flex h-full cursor-grab items-center pl-1 pr-0.5 opacity-50 active:cursor-grabbing"
                   aria-hidden
                 >
                   <GripVertical className="h-3.5 w-3.5" />
@@ -120,14 +119,10 @@ export function CategorySidebar({
                 <button
                   type="button"
                   onClick={() => onSelect(c.id)}
-                  className={`flex flex-1 items-center justify-between rounded-md px-2 py-2 text-sm transition-colors ${
-                    active
-                      ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900"
-                      : "hover:bg-zinc-200/60 dark:hover:bg-zinc-800/60"
-                  }`}
+                  className="flex flex-1 items-center justify-between gap-2 px-1 text-sm font-bold uppercase"
                 >
                   <span className="truncate">{c.name}</span>
-                  <span className="ml-2 text-xs opacity-70">
+                  <span className="font-mono text-xs opacity-80">
                     {counts[c.id] ?? 0}
                   </span>
                 </button>
@@ -135,12 +130,12 @@ export function CategorySidebar({
                   <button
                     type="button"
                     aria-label={`Delete ${c.name}`}
-                    title="Delete category"
+                    title="Delete"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleDeleteClick(c.id);
                     }}
-                    className="ml-1 hidden rounded p-1 text-zinc-500 hover:bg-zinc-300 hover:text-red-600 group-hover:block dark:hover:bg-zinc-700"
+                    className="hidden h-full px-1.5 hover:bg-red-500 hover:text-white group-hover:block"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
@@ -152,11 +147,15 @@ export function CategorySidebar({
       </ScrollArea>
 
       {pendingCategory && (
-        <div className="rounded-md border border-red-200 bg-red-50 p-3 text-xs dark:border-red-900/40 dark:bg-red-950/30">
-          <p className="mb-2 leading-snug">
-            <span className="font-medium">Delete &ldquo;{pendingCategory.name}&rdquo;?</span>{" "}
-            It has {counts[pendingCategory.id]} video
-            {counts[pendingCategory.id] === 1 ? "" : "s"}. Move them to:
+        <div className="border-2 border-black bg-red-500 p-2 text-xs font-bold text-white dark:border-zinc-100">
+          <p className="mb-1.5 leading-snug">
+            DELETE &ldquo;{pendingCategory.name.toUpperCase()}&rdquo;?{" "}
+            <span className="font-mono font-normal">
+              ({counts[pendingCategory.id]} videos)
+            </span>
+          </p>
+          <p className="mb-1 text-[10px] uppercase opacity-90">
+            Move videos to:
           </p>
           <div className="flex flex-col gap-1">
             {reassignTargets.map((t) => (
@@ -167,7 +166,7 @@ export function CategorySidebar({
                   onRemove(pendingCategory.id, t.id);
                   setPendingDelete(null);
                 }}
-                className="rounded px-2 py-1 text-left transition-colors hover:bg-red-100 dark:hover:bg-red-900/40"
+                className="border-2 border-black bg-white px-2 py-1 text-left text-black uppercase hover:bg-yellow-300 dark:border-zinc-900"
               >
                 → {t.name}
               </button>
@@ -177,21 +176,21 @@ export function CategorySidebar({
               onClick={() => {
                 if (
                   window.confirm(
-                    `Delete "${pendingCategory.name}" and all its videos? This cannot be undone.`
+                    `Delete "${pendingCategory.name}" and all its videos?`
                   )
                 ) {
                   onRemove(pendingCategory.id, null);
                   setPendingDelete(null);
                 }
               }}
-              className="rounded px-2 py-1 text-left font-medium text-red-700 transition-colors hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40"
+              className="border-2 border-black bg-black px-2 py-1 text-left uppercase hover:bg-zinc-800 dark:border-zinc-100"
             >
               Delete videos too
             </button>
             <button
               type="button"
               onClick={() => setPendingDelete(null)}
-              className="mt-1 rounded px-2 py-1 text-left text-zinc-500 hover:bg-zinc-200 dark:hover:bg-zinc-800"
+              className="border-2 border-black bg-stone-200 px-2 py-1 text-left text-black uppercase hover:bg-stone-300 dark:border-zinc-100"
             >
               Cancel
             </button>
@@ -199,24 +198,23 @@ export function CategorySidebar({
         </div>
       )}
 
-      {/* Memory Section */}
-      <div className="flex flex-col gap-2 border-t border-zinc-200 pt-4 dark:border-zinc-800">
+      <div className="flex flex-col gap-1 border-t-2 border-black pt-2 dark:border-zinc-100">
         <button
           type="button"
           onClick={() => setMemoryOpen(!memoryOpen)}
-          className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-zinc-700 transition-colors hover:bg-zinc-200/60 dark:text-zinc-300 dark:hover:bg-zinc-800/60"
+          className="flex h-7 items-center gap-1.5 border-2 border-black bg-white px-2 text-xs font-bold uppercase hover:bg-stone-200 dark:border-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
-          <Trash2 className="h-4 w-4" />
+          <Trash2 className="h-3 w-3" />
           <span>Memory</span>
           <ChevronDown
-            className={`ml-auto h-3.5 w-3.5 transition-transform ${
+            className={`ml-auto h-3 w-3 transition-transform ${
               memoryOpen ? "rotate-180" : ""
             }`}
           />
         </button>
 
         {memoryOpen && (
-          <div className="flex flex-col gap-2 rounded-md bg-zinc-100 p-2 dark:bg-zinc-800/50">
+          <div className="flex flex-col gap-1 border-2 border-black bg-stone-200 p-1 dark:border-zinc-100 dark:bg-zinc-800">
             {categories.map((c) => (
               <button
                 key={c.id}
@@ -226,7 +224,7 @@ export function CategorySidebar({
                     onClearCategory(c.id);
                   }
                 }}
-                className="flex items-center gap-2 rounded px-2 py-1.5 text-xs text-zinc-600 transition-colors hover:bg-red-100 hover:text-red-700 dark:text-zinc-400 dark:hover:bg-red-950/40 dark:hover:text-red-400"
+                className="flex items-center gap-1 px-1.5 py-1 text-left text-[11px] font-bold uppercase hover:bg-red-500 hover:text-white"
               >
                 <X className="h-3 w-3" />
                 <span>Clear {c.name}</span>
@@ -239,25 +237,29 @@ export function CategorySidebar({
                   onClearAll();
                 }
               }}
-              className="flex items-center gap-2 rounded px-2 py-1.5 text-xs font-medium text-red-600 transition-colors hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-950/40"
+              className="flex items-center gap-1 border-t-2 border-black px-1.5 py-1 text-left text-[11px] font-black uppercase text-red-700 hover:bg-red-500 hover:text-white dark:border-zinc-100"
             >
               <Trash2 className="h-3 w-3" />
-              <span>Clear All Memory</span>
+              <span>Clear All</span>
             </button>
           </div>
         )}
       </div>
 
-      <form onSubmit={submit} className="flex gap-2">
-        <Input
+      <form onSubmit={submit} className="flex">
+        <input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
-          placeholder="New category"
-          className="h-9"
+          placeholder="NEW CATEGORY"
+          className="h-8 min-w-0 flex-1 border-2 border-r-0 border-black bg-white px-2 text-xs font-bold uppercase placeholder:text-black/40 focus:outline-none dark:border-zinc-100 dark:bg-zinc-900"
         />
-        <Button type="submit" size="icon" className="h-9 w-9 shrink-0">
-          <Plus className="h-4 w-4" />
-        </Button>
+        <button
+          type="submit"
+          aria-label="Add category"
+          className="grid h-8 w-8 shrink-0 place-items-center border-2 border-black bg-yellow-300 hover:bg-yellow-400 active:translate-x-px active:translate-y-px dark:border-zinc-100 dark:text-black"
+        >
+          <Plus className="h-4 w-4" strokeWidth={3} />
+        </button>
       </form>
     </aside>
   );
