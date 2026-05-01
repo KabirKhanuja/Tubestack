@@ -51,10 +51,17 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function ensureDefaults(s: TubestackState): TubestackState {
+  const defaultById = Object.fromEntries(DEFAULT_CATEGORIES.map((c) => [c.id, c]));
   const existingIds = new Set(s.categories.map((c) => c.id));
+  const base: Category[] = DEFAULT_CATEGORIES.filter((c) => !existingIds.has(c.id));
+  // Backfill color onto stored default categories that predate the color field
   const merged: Category[] = [
-    ...DEFAULT_CATEGORIES.filter((c) => !existingIds.has(c.id)),
-    ...s.categories,
+    ...base,
+    ...s.categories.map((c) =>
+      !c.color && defaultById[c.id]?.color
+        ? { ...c, color: defaultById[c.id].color }
+        : c
+    ),
   ];
   return {
     ...s,
