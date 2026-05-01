@@ -8,6 +8,7 @@ import { QueuePanel } from "@/components/queue-panel";
 import { AddVideoBar } from "@/components/add-video-bar";
 import { YouTubePlayer } from "@/components/youtube-player";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { Resizer } from "@/components/resizer";
 import {
   CategoryPickerModal,
   type PendingVideo,
@@ -16,6 +17,7 @@ import { usePersistentState } from "@/lib/storage";
 import { reorder } from "@/lib/dnd";
 import {
   DEFAULT_CATEGORIES,
+  DEFAULT_LAYOUT,
   type Category,
   type TubestackState,
   type Video,
@@ -32,9 +34,20 @@ const INITIAL_STATE: TubestackState = {
   videos: [],
   activeCategoryId: "__all__",
   activeVideoId: null,
+  layout: DEFAULT_LAYOUT,
 };
 
 const COMPLETE_THRESHOLD = 0.95;
+
+// Panel width constraints (px)
+const SIDEBAR_MIN = 160;
+const SIDEBAR_MAX = 400;
+const QUEUE_MIN = 200;
+const QUEUE_MAX = 480;
+
+function clamp(value: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, value));
+}
 
 function ensureDefaults(s: TubestackState): TubestackState {
   const existingIds = new Set(s.categories.map((c) => c.id));
@@ -42,7 +55,11 @@ function ensureDefaults(s: TubestackState): TubestackState {
     ...DEFAULT_CATEGORIES.filter((c) => !existingIds.has(c.id)),
     ...s.categories,
   ];
-  return { ...s, categories: merged };
+  return {
+    ...s,
+    categories: merged,
+    layout: s.layout ?? DEFAULT_LAYOUT,
+  };
 }
 
 function slug(name: string): string {
@@ -66,7 +83,43 @@ export default function Home() {
   const [pendingVideo, setPendingVideo] = useState<PendingVideo | null>(null);
 
   const merged = useMemo(() => ensureDefaults(state), [state]);
-  const { categories, videos, activeCategoryId, activeVideoId } = merged;
+  const { categories, videos, activeCategoryId, activeVideoId, layout } = merged;
+
+  const sidebarWidth = layout.sidebarWidth;
+  const queueWidth = layout.queueWidth;
+
+  /* ---------- Resizers ---------- */
+
+  const handleSidebarDrag = useCallback((dx: number) => {
+    setState((s) => ({
+      ...s,
+      layout: {
+        ...s.layout,
+        sidebarWidth: clamp(
+          (s.layout?.sidebarWidth ?? DEFAULT_LAYOUT.sidebarWidth) + dx,
+          SIDEBAR_MIN,
+          SIDEBAR_MAX
+        ),
+      },
+    }));
+  }, [setState]);
+
+  const handleQueueDrag = useCallback((dx: number) => {
+    // Right resizer: drag left (negative dx) expands queue
+    setState((s) => ({
+      ...s,
+      layout: {
+        ...s.layout,
+        queueWidth: clamp(
+          (s.layout?.queueWidth ?? DEFAULT_LAYOUT.queueWidth) - dx,
+          QUEUE_MIN,
+          QUEUE_MAX
+        ),
+      },
+    }));
+  }, [setState]);
+
+  /* ---------- Counts ---------- */
 
   const counts = useMemo(() => {
     const out: Record<string, number> = {};
@@ -449,9 +502,12 @@ export default function Home() {
   /* ---------- Render ---------- */
 
   return (
-    <div className="flex h-dvh w-full bg-zinc-100 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
-      {/* Left: Categories */}
-      <div className="hidden w-60 shrink-0 sm:block">
+    <div className="flex h-dvh w-full overflow-hidden bg-stone-100 text-black dark:bg-zinc-950 dark:text-zinc-100">
+      {/* Left: Categories — resizable */}
+      <div
+        className="hidden shrink-0 sm:block"
+        style={{ width: sidebarWidth }}
+      >
         <CategorySidebar
           categories={categories}
           activeId={activeCategoryId}
@@ -465,8 +521,14 @@ export default function Home() {
         />
       </div>
 
+      {/* Resizer: sidebar ↔ player */}
+      <Resizer
+        onDrag={handleSidebarDrag}
+        ariaLabel="Resize sidebar"
+      />
+
       {/* Middle: Player */}
-      <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 lg:p-6">
+      <main className="flex min-w-0 flex-1 flex-col gap-2 p-3">
         <div className="flex shrink-0 items-center gap-2">
           <div className="min-w-0 flex-1">
             <AddVideoBar loading={pickerLoading} onSubmit={handleAddUrl} />
@@ -474,7 +536,7 @@ export default function Home() {
           <ThemeToggle />
         </div>
 
-        <div className="flex flex-1 flex-col items-stretch justify-start gap-4 overflow-hidden">
+        <div className="flex flex-1 flex-col items-stretch justify-start gap-2 overflow-hidden">
           <YouTubePlayer
             videoId={hydrated && activeVideo ? activeVideo.videoId : null}
             startSeconds={activeVideo?.watchedSeconds ?? 0}
@@ -483,13 +545,13 @@ export default function Home() {
           />
 
           {activeVideo && (
-            <div className="flex items-start justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+            <div className="flex items-start justify-between gap-2 border-2 border-black bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
               <div className="min-w-0 flex-1">
-                <h2 className="text-base font-semibold leading-tight">
+                <h2 className="text-sm font-black leading-tight uppercase">
                   {activeVideo.title}
                 </h2>
                 {activeVideo.author && (
-                  <p className="mt-1 text-sm text-zinc-500">
+                  <p className="mt-0.5 font-mono text-xs uppercase opacity-60">
                     {activeVideo.author}
                   </p>
                 )}
@@ -498,18 +560,27 @@ export default function Home() {
                 href={canonicalUrl(activeVideo.videoId)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:border-red-500 hover:text-red-600 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-red-500 dark:hover:text-red-400"
+                className="inline-flex shrink-0 items-center gap-1 border-2 border-black px-2 py-1 text-xs font-bold uppercase transition-colors hover:bg-red-500 hover:text-white dark:border-zinc-100 dark:hover:border-red-500"
               >
-                <ExternalLink className="h-3.5 w-3.5" />
-                Watch on YouTube
+                <ExternalLink className="h-3 w-3" />
+                YouTube
               </a>
             </div>
           )}
         </div>
       </main>
 
-      {/* Right: Queue */}
-      <div className="hidden w-80 shrink-0 lg:block">
+      {/* Resizer: player ↔ queue */}
+      <Resizer
+        onDrag={handleQueueDrag}
+        ariaLabel="Resize queue"
+      />
+
+      {/* Right: Queue — resizable */}
+      <div
+        className="hidden shrink-0 lg:block"
+        style={{ width: queueWidth }}
+      >
         <QueuePanel
           videos={filteredVideos}
           activeVideoId={activeVideoId}

@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
 
 declare global {
   interface Window {
@@ -226,36 +225,36 @@ export function YouTubePlayer({
   const watchUrl = videoId ? `https://www.youtube.com/watch?v=${videoId}` : null;
 
   return (
-    <div className="relative w-full overflow-hidden rounded-xl bg-black aspect-video shadow-lg ring-1 ring-white/10">
+    <div className="relative w-full overflow-hidden border-2 border-black bg-black aspect-video dark:border-zinc-100">
       <div className="absolute inset-0">
         <div ref={containerRef} className="h-full w-full" />
       </div>
 
       {videoId && playerErrorCode !== null && (
-        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/70 p-6">
-          <div className="max-w-md text-center">
-            <p className="text-sm font-medium text-white">
+        <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/85 p-4">
+          <div className="border-2 border-yellow-300 bg-black p-4 text-center max-w-sm">
+            <p className="text-sm font-black uppercase text-white leading-snug">
               {isEmbedBlocked
-                ? "This video can’t be played inside Tubestack. The rights holder blocked embedding."
-                : "This video can’t be played here right now."}
+                ? "Embedding blocked by rights holder."
+                : "Can't play this video here."}
             </p>
-            <p className="mt-2 text-xs text-zinc-200">
-              You can still watch it directly on YouTube.
+            <p className="mt-1 font-mono text-[11px] uppercase text-zinc-400">
+              Watch it on YouTube directly.
             </p>
-            <div className="mt-4 flex items-center justify-center gap-2">
-              <Button
+            <div className="mt-3">
+              <button
                 type="button"
-                variant="secondary"
+                className="border-2 border-yellow-300 bg-yellow-300 px-3 py-1.5 text-xs font-black uppercase text-black hover:bg-yellow-400 transition-colors"
                 onClick={() => {
                   if (!watchUrl) return;
                   window.open(watchUrl, "_blank", "noopener,noreferrer");
                 }}
               >
                 Watch on YouTube
-              </Button>
+              </button>
             </div>
-            <p className="mt-3 text-[11px] text-zinc-300">
-              Error code: {playerErrorCode}
+            <p className="mt-2 font-mono text-[10px] text-zinc-600 uppercase">
+              ERR {playerErrorCode}
             </p>
           </div>
         </div>
@@ -263,11 +262,11 @@ export function YouTubePlayer({
 
       <div
         aria-hidden={Boolean(videoId)}
-        className={`pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-zinc-400 transition-opacity duration-200 ${
+        className={`pointer-events-none absolute inset-0 flex items-center justify-center font-mono text-xs uppercase text-zinc-500 transition-opacity duration-200 ${
           videoId ? "opacity-0" : "opacity-100"
         }`}
       >
-        Select a video from the queue to start watching
+        Select a video from the queue →
       </div>
     </div>
   );
