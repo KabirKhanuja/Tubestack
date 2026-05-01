@@ -207,6 +207,31 @@ export default function Home() {
     [setState]
   );
 
+  const clearCategory = useCallback(
+    (categoryId: string) => {
+      setState((s) => {
+        const newVideos = s.videos.filter((v) => v.categoryId !== categoryId);
+        const activeStillExists = newVideos.some(
+          (v) => v.id === s.activeVideoId
+        );
+        return {
+          ...s,
+          videos: newVideos,
+          activeVideoId: activeStillExists ? s.activeVideoId : null,
+        };
+      });
+    },
+    [setState]
+  );
+
+  const clearAll = useCallback(() => {
+    setState((s) => ({
+      ...s,
+      videos: [],
+      activeVideoId: null,
+    }));
+  }, [setState]);
+
   const handleProgress = useCallback(
     (currentSeconds: number, durationSeconds: number) => {
       const id = activeVideoId;
@@ -264,6 +289,8 @@ export default function Home() {
           onSelect={selectCategory}
           onAdd={addCategory}
           onRemove={removeCategory}
+          onClearCategory={clearCategory}
+          onClearAll={clearAll}
         />
       </div>
 
