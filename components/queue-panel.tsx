@@ -29,8 +29,8 @@ export function QueuePanel({
   const dnd = useDragReorder(onReorder);
 
   return (
-    <div className="flex h-full w-full flex-col border-l-2 border-black bg-stone-50 dark:border-zinc-100 dark:bg-zinc-950">
-      <div className="flex items-center justify-between border-b-2 border-black bg-yellow-300 px-3 py-1.5 dark:border-zinc-100 dark:text-black">
+    <div className="dotted-bg flex h-full w-full flex-col border-l-2 border-black bg-stone-50 dark:border-zinc-100 dark:bg-zinc-950">
+      <div className="flex items-center justify-between border-b-2 border-black bg-yellow-300 px-3 py-2 brutal-shadow dark:border-zinc-100 dark:text-black">
         <h2 className="text-sm font-black uppercase tracking-tight">Queue</h2>
         <span className="font-mono text-xs font-bold">
           {videos.length.toString().padStart(2, "0")}
@@ -65,18 +65,30 @@ export function QueuePanel({
                 <li
                   key={v.id}
                   draggable
-                  onDragStart={dnd.onDragStart(v.id)}
+                  onDragStart={(e) => {
+                    dnd.onDragStart(v.id)(e);
+                    try {
+                      e.dataTransfer.setData(
+                        "application/x-tubestack-video",
+                        v.id
+                      );
+                    } catch {
+                      // ignore
+                    }
+                  }}
                   onDragOver={dnd.onDragOver(v.id)}
                   onDragLeave={dnd.onDragLeave(v.id)}
                   onDrop={dnd.onDrop(v.id)}
-                  className={`group relative border-b-2 border-black transition-colors dark:border-zinc-100 ${
-                    active
-                      ? "bg-yellow-200 dark:bg-yellow-300/20"
-                      : "bg-white hover:bg-stone-100 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                  } ${dragging ? "opacity-40" : ""} ${
-                    dropTarget ? "border-t-4 border-t-red-500" : ""
-                  }`}
+                  className={`group relative border-b-2 border-black bg-white transition-colors hover:bg-stone-100 dark:border-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 ${
+                    dragging ? "opacity-40" : ""
+                  } ${dropTarget ? "border-t-4 border-t-red-500" : ""}`}
                 >
+                  {active && !v.completed && (
+                    <span
+                      className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-red-600"
+                      aria-hidden
+                    />
+                  )}
                   <div className="flex items-start gap-1.5 p-2">
                     <span
                       className="mt-1 flex cursor-grab items-center text-black/40 active:cursor-grabbing dark:text-zinc-400"

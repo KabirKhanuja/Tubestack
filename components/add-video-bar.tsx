@@ -21,7 +21,7 @@ export function AddVideoBar({ loading, onSubmit }: Props) {
 
   return (
     <form onSubmit={submit} className="flex w-full items-center">
-      <div className="relative flex h-10 flex-1 items-center border-2 border-black bg-white focus-within:brutal-shadow-sm dark:border-zinc-100 dark:bg-zinc-900">
+      <div className="relative flex h-10 flex-1 items-center border-2 border-black bg-white brutal-shadow focus-within:translate-x-px focus-within:translate-y-px focus-within:shadow-none dark:border-zinc-100 dark:bg-zinc-900 transition-all">
         <div className="grid h-full w-10 place-items-center border-r-2 border-black bg-yellow-300 dark:border-zinc-100 dark:text-black">
           {loading ? (
             <Loader2 className="h-4 w-4 animate-spin" />

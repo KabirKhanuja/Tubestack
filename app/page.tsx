@@ -9,6 +9,8 @@ import { AddVideoBar } from "@/components/add-video-bar";
 import { YouTubePlayer } from "@/components/youtube-player";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Resizer } from "@/components/resizer";
+import { InfoButton } from "@/components/info-button";
+import { MobileLayout } from "@/components/mobile-layout";
 import {
   CategoryPickerModal,
   type PendingVideo,
@@ -18,6 +20,7 @@ import { reorder } from "@/lib/dnd";
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_LAYOUT,
+  CATEGORY_COLORS,
   type Category,
   type TubestackState,
   type Video,
@@ -50,10 +53,17 @@ function clamp(value: number, min: number, max: number) {
 }
 
 function ensureDefaults(s: TubestackState): TubestackState {
+  const defaultById = Object.fromEntries(DEFAULT_CATEGORIES.map((c) => [c.id, c]));
   const existingIds = new Set(s.categories.map((c) => c.id));
+  const base: Category[] = DEFAULT_CATEGORIES.filter((c) => !existingIds.has(c.id));
+  // Backfill color onto stored default categories that predate the color field
   const merged: Category[] = [
-    ...DEFAULT_CATEGORIES.filter((c) => !existingIds.has(c.id)),
-    ...s.categories,
+    ...base,
+    ...s.categories.map((c) =>
+      !c.color && defaultById[c.id]?.color
+        ? { ...c, color: defaultById[c.id].color }
+        : c
+    ),
   ];
   return {
     ...s,
@@ -153,7 +163,8 @@ export default function Home() {
         const existing = new Set(s.categories.map((c) => c.id));
         let i = 2;
         while (existing.has(id)) id = `${slug(name)}-${i++}`;
-        const cat: Category = { id, name, removable: true };
+        const color = CATEGORY_COLORS[Math.floor(Math.random() * CATEGORY_COLORS.length)];
+        const cat: Category = { id, name, removable: true, color };
         return {
           ...s,
           categories: [...s.categories, cat],
@@ -380,6 +391,32 @@ export default function Home() {
     [setState]
   );
 
+  const moveVideoToCategory = useCallback(
+    (videoId: string, categoryId: string) => {
+      let moved = false;
+      let videoTitle = "";
+      setState((s) => {
+        const v = s.videos.find((x) => x.id === videoId);
+        if (!v || v.categoryId === categoryId) return s;
+        moved = true;
+        videoTitle = v.title;
+        return {
+          ...s,
+          videos: s.videos.map((x) =>
+            x.id === videoId ? { ...x, categoryId } : x
+          ),
+        };
+      });
+      if (moved) {
+        const cat = categories.find((c) => c.id === categoryId);
+        toast.success(
+          `Moved "${videoTitle}" → ${cat?.name ?? "category"}`
+        );
+      }
+    },
+    [setState, categories]
+  );
+
   /* ---------- Playback ---------- */
 
   const handleProgress = useCallback(
@@ -450,6 +487,17 @@ export default function Home() {
     }));
   }, [activeVideoId, setState]);
 
+  /* ---------- Mobile detection ---------- */
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   /* ---------- Keyboard shortcuts ---------- */
 
   useEffect(() => {
@@ -501,6 +549,45 @@ export default function Home() {
 
   /* ---------- Render ---------- */
 
+  if (isMobile) {
+    return (
+      <>
+        <MobileLayout
+          hydrated={hydrated}
+          categories={categories}
+          counts={counts}
+          activeCategoryId={activeCategoryId}
+          videos={videos}
+          filteredVideos={filteredVideos}
+          activeVideo={activeVideo}
+          activeVideoId={activeVideoId}
+          emptyMessage={
+            videos.length === 0
+              ? "No videos yet."
+              : `No videos in ${activeCategoryName}.`
+          }
+          pickerLoading={pickerLoading}
+          onAddUrl={handleAddUrl}
+          onSelectCategory={selectCategory}
+          onSelectVideo={selectVideo}
+          onCompleteVideo={completeVideo}
+          onRemoveVideo={removeVideo}
+          onReorderVideos={reorderVideos}
+          onProgress={handleProgress}
+          onEnded={handleEnded}
+        />
+        <CategoryPickerModal
+          open={pickerOpen}
+          loading={pickerLoading}
+          pending={pendingVideo}
+          categories={categories}
+          onPick={handlePickCategory}
+          onClose={closePicker}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-stone-100 text-black dark:bg-zinc-950 dark:text-zinc-100">
       {/* Left: Categories — resizable */}
@@ -518,6 +605,7 @@ export default function Home() {
           onReorder={reorderCategories}
           onClearCategory={clearCategory}
           onClearAll={clearAll}
+          onVideoDropToCategory={moveVideoToCategory}
         />
       </div>
 
@@ -528,11 +616,12 @@ export default function Home() {
       />
 
       {/* Middle: Player */}
-      <main className="flex min-w-0 flex-1 flex-col gap-2 p-3">
+      <main className="dotted-bg flex min-w-0 flex-1 flex-col gap-2 p-3">
         <div className="flex shrink-0 items-center gap-2">
           <div className="min-w-0 flex-1">
             <AddVideoBar loading={pickerLoading} onSubmit={handleAddUrl} />
           </div>
+          <InfoButton />
           <ThemeToggle />
         </div>
 
