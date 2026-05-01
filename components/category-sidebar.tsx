@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   ChevronDown,
   GripVertical,
@@ -12,6 +12,14 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDragReorder } from "@/lib/dnd";
 import { CATEGORY_COLORS, type Category } from "@/lib/types";
 
+const VIDEO_MIME = "application/x-tubestack-video";
+
+function dragHasVideo(e: React.DragEvent): boolean {
+  const types = e.dataTransfer?.types;
+  if (!types) return false;
+  return Array.from(types).includes(VIDEO_MIME);
+}
+
 type Props = {
   categories: Category[];
   activeId: string;
@@ -22,6 +30,7 @@ type Props = {
   onReorder: (fromId: string, toId: string) => void;
   onClearCategory: (id: string) => void;
   onClearAll: () => void;
+  onVideoDropToCategory: (videoId: string, categoryId: string) => void;
 };
 
 const HATCH = "repeating-linear-gradient(-45deg,transparent 0px,transparent 5px,rgba(0,0,0,0.09) 5px,rgba(0,0,0,0.09) 6px)";
@@ -50,12 +59,25 @@ export function CategorySidebar({
   onReorder,
   onClearCategory,
   onClearAll,
+  onVideoDropToCategory,
 }: Props) {
   const [newName, setNewName] = useState("");
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const [videoDropTarget, setVideoDropTarget] = useState<string | null>(null);
 
   const dnd = useDragReorder(onReorder);
+
+  // Clear cross-panel drop highlight when any drag ends
+  useEffect(() => {
+    const clear = () => setVideoDropTarget(null);
+    window.addEventListener("dragend", clear);
+    window.addEventListener("drop", clear);
+    return () => {
+      window.removeEventListener("dragend", clear);
+      window.removeEventListener("drop", clear);
+    };
+  }, []);
 
   function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -111,18 +133,46 @@ export function CategorySidebar({
             const color = c.color ?? CATEGORY_COLORS[0];
             const dragging = dnd.draggingId === c.id;
             const dropTarget = dnd.overId === c.id && dnd.draggingId !== c.id;
+            const videoOver = videoDropTarget === c.id;
 
             return (
               <div
                 key={c.id}
                 draggable
                 onDragStart={dnd.onDragStart(c.id)}
-                onDragOver={dnd.onDragOver(c.id)}
-                onDragLeave={dnd.onDragLeave(c.id)}
-                onDrop={dnd.onDrop(c.id)}
-                className={`group relative flex h-9 items-center border-2 border-black transition-all dark:border-zinc-100 ${
-                  dragging ? "opacity-40" : ""
-                } ${dropTarget ? "translate-y-px" : ""}`}
+                onDragOver={(e) => {
+                  if (dragHasVideo(e)) {
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = "move";
+                    if (videoDropTarget !== c.id) setVideoDropTarget(c.id);
+                    return;
+                  }
+                  dnd.onDragOver(c.id)(e);
+                }}
+                onDragLeave={(e) => {
+                  if (dragHasVideo(e)) {
+                    if (videoDropTarget === c.id) setVideoDropTarget(null);
+                    return;
+                  }
+                  dnd.onDragLeave(c.id)(e);
+                }}
+                onDrop={(e) => {
+                  const videoId = e.dataTransfer.getData(VIDEO_MIME);
+                  if (videoId) {
+                    e.preventDefault();
+                    onVideoDropToCategory(videoId, c.id);
+                    setVideoDropTarget(null);
+                    return;
+                  }
+                  dnd.onDrop(c.id)(e);
+                }}
+                className={`group relative flex h-9 items-center border-2 transition-all ${
+                  videoOver
+                    ? "border-red-500 ring-2 ring-red-500"
+                    : "border-black dark:border-zinc-100"
+                } ${dragging ? "opacity-40" : ""} ${dropTarget ? "translate-y-px" : ""} ${
+                  videoOver ? "translate-y-px brutal-shadow-sm" : ""
+                }`}
                 style={
                   active
                     ? {

@@ -65,7 +65,17 @@ export function QueuePanel({
                 <li
                   key={v.id}
                   draggable
-                  onDragStart={dnd.onDragStart(v.id)}
+                  onDragStart={(e) => {
+                    dnd.onDragStart(v.id)(e);
+                    try {
+                      e.dataTransfer.setData(
+                        "application/x-tubestack-video",
+                        v.id
+                      );
+                    } catch {
+                      // ignore
+                    }
+                  }}
                   onDragOver={dnd.onDragOver(v.id)}
                   onDragLeave={dnd.onDragLeave(v.id)}
                   onDrop={dnd.onDrop(v.id)}

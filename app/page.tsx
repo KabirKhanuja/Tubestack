@@ -10,6 +10,7 @@ import { YouTubePlayer } from "@/components/youtube-player";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Resizer } from "@/components/resizer";
 import { InfoButton } from "@/components/info-button";
+import { MobileLayout } from "@/components/mobile-layout";
 import {
   CategoryPickerModal,
   type PendingVideo,
@@ -390,6 +391,32 @@ export default function Home() {
     [setState]
   );
 
+  const moveVideoToCategory = useCallback(
+    (videoId: string, categoryId: string) => {
+      let moved = false;
+      let videoTitle = "";
+      setState((s) => {
+        const v = s.videos.find((x) => x.id === videoId);
+        if (!v || v.categoryId === categoryId) return s;
+        moved = true;
+        videoTitle = v.title;
+        return {
+          ...s,
+          videos: s.videos.map((x) =>
+            x.id === videoId ? { ...x, categoryId } : x
+          ),
+        };
+      });
+      if (moved) {
+        const cat = categories.find((c) => c.id === categoryId);
+        toast.success(
+          `Moved "${videoTitle}" → ${cat?.name ?? "category"}`
+        );
+      }
+    },
+    [setState, categories]
+  );
+
   /* ---------- Playback ---------- */
 
   const handleProgress = useCallback(
@@ -460,6 +487,17 @@ export default function Home() {
     }));
   }, [activeVideoId, setState]);
 
+  /* ---------- Mobile detection ---------- */
+
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(max-width: 767px)");
+    const update = () => setIsMobile(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
   /* ---------- Keyboard shortcuts ---------- */
 
   useEffect(() => {
@@ -511,6 +549,45 @@ export default function Home() {
 
   /* ---------- Render ---------- */
 
+  if (isMobile) {
+    return (
+      <>
+        <MobileLayout
+          hydrated={hydrated}
+          categories={categories}
+          counts={counts}
+          activeCategoryId={activeCategoryId}
+          videos={videos}
+          filteredVideos={filteredVideos}
+          activeVideo={activeVideo}
+          activeVideoId={activeVideoId}
+          emptyMessage={
+            videos.length === 0
+              ? "No videos yet."
+              : `No videos in ${activeCategoryName}.`
+          }
+          pickerLoading={pickerLoading}
+          onAddUrl={handleAddUrl}
+          onSelectCategory={selectCategory}
+          onSelectVideo={selectVideo}
+          onCompleteVideo={completeVideo}
+          onRemoveVideo={removeVideo}
+          onReorderVideos={reorderVideos}
+          onProgress={handleProgress}
+          onEnded={handleEnded}
+        />
+        <CategoryPickerModal
+          open={pickerOpen}
+          loading={pickerLoading}
+          pending={pendingVideo}
+          categories={categories}
+          onPick={handlePickCategory}
+          onClose={closePicker}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="flex h-dvh w-full overflow-hidden bg-stone-100 text-black dark:bg-zinc-950 dark:text-zinc-100">
       {/* Left: Categories — resizable */}
@@ -528,6 +605,7 @@ export default function Home() {
           onReorder={reorderCategories}
           onClearCategory={clearCategory}
           onClearAll={clearAll}
+          onVideoDropToCategory={moveVideoToCategory}
         />
       </div>
 
