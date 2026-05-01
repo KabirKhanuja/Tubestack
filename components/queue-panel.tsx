@@ -79,14 +79,16 @@ export function QueuePanel({
                   onDragOver={dnd.onDragOver(v.id)}
                   onDragLeave={dnd.onDragLeave(v.id)}
                   onDrop={dnd.onDrop(v.id)}
-                  className={`group relative border-b-2 border-black transition-colors dark:border-zinc-100 ${
-                    active
-                      ? "bg-yellow-200 dark:bg-yellow-300/20"
-                      : "bg-white hover:bg-stone-100 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                  } ${dragging ? "opacity-40" : ""} ${
-                    dropTarget ? "border-t-4 border-t-red-500" : ""
-                  }`}
+                  className={`group relative border-b-2 border-black bg-white transition-colors hover:bg-stone-100 dark:border-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800 ${
+                    dragging ? "opacity-40" : ""
+                  } ${dropTarget ? "border-t-4 border-t-red-500" : ""}`}
                 >
+                  {active && !v.completed && (
+                    <span
+                      className="pointer-events-none absolute inset-y-0 left-0 w-1 bg-red-600"
+                      aria-hidden
+                    />
+                  )}
                   <div className="flex items-start gap-1.5 p-2">
                     <span
                       className="mt-1 flex cursor-grab items-center text-black/40 active:cursor-grabbing dark:text-zinc-400"

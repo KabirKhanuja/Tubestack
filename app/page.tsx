@@ -616,7 +616,7 @@ export default function Home() {
       />
 
       {/* Middle: Player */}
-      <main className="flex min-w-0 flex-1 flex-col gap-2 p-3">
+      <main className="dotted-bg flex min-w-0 flex-1 flex-col gap-2 p-3">
         <div className="flex shrink-0 items-center gap-2">
           <div className="min-w-0 flex-1">
             <AddVideoBar loading={pickerLoading} onSubmit={handleAddUrl} />

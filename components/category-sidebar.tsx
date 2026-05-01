@@ -105,7 +105,7 @@ export function CategorySidebar({
     : [];
 
   return (
-    <aside className="flex h-full w-full flex-col gap-2 border-r-2 border-black bg-stone-50 p-2 dark:border-zinc-100 dark:bg-zinc-950">
+    <aside className="dotted-bg flex h-full w-full flex-col gap-2 border-r-2 border-black bg-stone-50 p-2 dark:border-zinc-100 dark:bg-zinc-950">
       {/* Brand header */}
       <div className="flex items-center justify-between border-2 border-black bg-yellow-300 px-2 py-2 brutal-shadow dark:border-zinc-100 dark:text-black">
         <h1 className="text-base font-black tracking-tight uppercase">Tubestack</h1>

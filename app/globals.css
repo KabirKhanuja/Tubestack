@@ -170,3 +170,26 @@
     rgba(255,255,255,0.13) 6px
   );
 }
+
+/* Subtle dotted background — applied to empty surfaces */
+.dotted-bg {
+  background-image: radial-gradient(circle, rgba(0, 0, 0, 0.15) 1px, transparent 1.2px);
+  background-size: 16px 16px;
+  background-position: 0 0;
+}
+.dark .dotted-bg {
+  background-image: radial-gradient(circle, rgba(255, 255, 255, 0.13) 1px, transparent 1.2px);
+}
+
+/* Splash screen animation — 0.5s fade in, 1s hold, 0.5s fade out */
+@keyframes tubestack-splash-fade {
+  0% { opacity: 0; }
+  25% { opacity: 1; }
+  75% { opacity: 1; }
+  100% { opacity: 0; }
+}
+@keyframes tubestack-splash-pop {
+  0% { transform: scale(0.92); }
+  30% { transform: scale(1); }
+  100% { transform: scale(1); }
+}
