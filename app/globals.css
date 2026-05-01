@@ -123,13 +123,14 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    @apply font-sans;
+    font-size: 112.5%; /* zoom-in: everything ~12% bigger by default */
+  }
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
     font-weight: 500;
-  }
-  html {
-    @apply font-sans;
   }
   h1, h2, h3, h4, h5, h6 {
     font-weight: 800;
@@ -144,8 +145,28 @@
   box-shadow: 2px 2px 0 0 #000;
 }
 .dark .brutal-shadow {
-  box-shadow: 4px 4px 0 0 #fafafa;
+  box-shadow: 4px 4px 0 0 rgba(255,255,255,0.9);
 }
 .dark .brutal-shadow-sm {
-  box-shadow: 2px 2px 0 0 #fafafa;
+  box-shadow: 2px 2px 0 0 rgba(255,255,255,0.9);
+}
+
+/* Diagonal hatch overlay (applied via backgroundImage) */
+.hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0px,
+    transparent 5px,
+    rgba(0,0,0,0.09) 5px,
+    rgba(0,0,0,0.09) 6px
+  );
+}
+.dark .hatch {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    transparent 0px,
+    transparent 5px,
+    rgba(255,255,255,0.13) 5px,
+    rgba(255,255,255,0.13) 6px
+  );
 }

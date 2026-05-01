@@ -18,6 +18,7 @@ import { reorder } from "@/lib/dnd";
 import {
   DEFAULT_CATEGORIES,
   DEFAULT_LAYOUT,
+  CATEGORY_COLORS,
   type Category,
   type TubestackState,
   type Video,
@@ -153,7 +154,8 @@ export default function Home() {
         const existing = new Set(s.categories.map((c) => c.id));
         let i = 2;
         while (existing.has(id)) id = `${slug(name)}-${i++}`;
-        const cat: Category = { id, name, removable: true };
+        const color = CATEGORY_COLORS[Math.floor(Math.random() * CATEGORY_COLORS.length)];
+        const cat: Category = { id, name, removable: true, color };
         return {
           ...s,
           categories: [...s.categories, cat],

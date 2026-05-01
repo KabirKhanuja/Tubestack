@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useDragReorder } from "@/lib/dnd";
-import type { Category } from "@/lib/types";
+import { CATEGORY_COLORS, type Category } from "@/lib/types";
 
 type Props = {
   categories: Category[];
@@ -23,6 +23,22 @@ type Props = {
   onClearCategory: (id: string) => void;
   onClearAll: () => void;
 };
+
+const HATCH = "repeating-linear-gradient(-45deg,transparent 0px,transparent 5px,rgba(0,0,0,0.09) 5px,rgba(0,0,0,0.09) 6px)";
+const HATCH_DARK = "repeating-linear-gradient(-45deg,transparent 0px,transparent 5px,rgba(255,255,255,0.13) 5px,rgba(255,255,255,0.13) 6px)";
+
+function catStyle(color: string, active: boolean, dark = false) {
+  if (active) {
+    return {
+      backgroundColor: color,
+      backgroundImage: dark ? HATCH_DARK : HATCH,
+      boxShadow: dark ? "2px 2px 0 0 rgba(255,255,255,0.9)" : "2px 2px 0 0 #000",
+    };
+  }
+  return {
+    backgroundColor: dark ? `${color}22` : `${color}33`,
+  };
+}
 
 export function CategorySidebar({
   categories,
@@ -68,19 +84,21 @@ export function CategorySidebar({
 
   return (
     <aside className="flex h-full w-full flex-col gap-2 border-r-2 border-black bg-stone-50 p-2 dark:border-zinc-100 dark:bg-zinc-950">
-      <div className="flex items-center justify-between border-2 border-black bg-yellow-300 px-2 py-1.5 dark:border-zinc-100 dark:text-black">
+      {/* Brand header */}
+      <div className="flex items-center justify-between border-2 border-black bg-yellow-300 px-2 py-2 brutal-shadow dark:border-zinc-100 dark:text-black">
         <h1 className="text-base font-black tracking-tight uppercase">Tubestack</h1>
         <span className="font-mono text-[10px] font-bold">v1</span>
       </div>
 
       <ScrollArea className="-mx-1 flex-1 px-1">
         <div className="flex flex-col gap-1" onDragEnd={dnd.onDragEnd}>
+          {/* ALL button */}
           <button
             type="button"
             onClick={() => onSelect("__all__")}
-            className={`flex h-8 items-center justify-between border-2 border-black px-2 text-sm font-bold uppercase transition-colors dark:border-zinc-100 ${
+            className={`flex h-9 items-center justify-between border-2 border-black px-2 text-sm font-bold uppercase transition-all dark:border-zinc-100 ${
               activeId === "__all__"
-                ? "bg-black text-white dark:bg-zinc-100 dark:text-black"
+                ? "bg-black text-white brutal-shadow dark:bg-zinc-100 dark:text-black"
                 : "bg-white hover:bg-stone-200 dark:bg-zinc-900 dark:hover:bg-zinc-800"
             }`}
           >
@@ -90,9 +108,9 @@ export function CategorySidebar({
 
           {categories.map((c) => {
             const active = c.id === activeId;
+            const color = c.color ?? CATEGORY_COLORS[0];
             const dragging = dnd.draggingId === c.id;
-            const dropTarget =
-              dnd.overId === c.id && dnd.draggingId !== c.id;
+            const dropTarget = dnd.overId === c.id && dnd.draggingId !== c.id;
 
             return (
               <div
@@ -102,16 +120,21 @@ export function CategorySidebar({
                 onDragOver={dnd.onDragOver(c.id)}
                 onDragLeave={dnd.onDragLeave(c.id)}
                 onDrop={dnd.onDrop(c.id)}
-                className={`group relative flex h-8 items-center border-2 transition-all ${
+                className={`group relative flex h-9 items-center border-2 border-black transition-all dark:border-zinc-100 ${
+                  dragging ? "opacity-40" : ""
+                } ${dropTarget ? "translate-y-px" : ""}`}
+                style={
                   active
-                    ? "border-black bg-black text-white dark:border-zinc-100 dark:bg-zinc-100 dark:text-black"
-                    : "border-black bg-white hover:bg-stone-200 dark:border-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800"
-                } ${dragging ? "opacity-40" : ""} ${
-                  dropTarget ? "translate-y-px brutal-shadow-sm" : ""
-                }`}
+                    ? {
+                        backgroundColor: color,
+                        backgroundImage: HATCH,
+                        boxShadow: "2px 2px 0 0 #000",
+                      }
+                    : { backgroundColor: `${color}99` }
+                }
               >
                 <span
-                  className="flex h-full cursor-grab items-center pl-1 pr-0.5 opacity-50 active:cursor-grabbing"
+                  className="flex h-full cursor-grab items-center pl-1 pr-0.5 opacity-60 active:cursor-grabbing"
                   aria-hidden
                 >
                   <GripVertical className="h-3.5 w-3.5" />
@@ -119,7 +142,7 @@ export function CategorySidebar({
                 <button
                   type="button"
                   onClick={() => onSelect(c.id)}
-                  className="flex flex-1 items-center justify-between gap-2 px-1 text-sm font-bold uppercase"
+                  className="flex flex-1 items-center justify-between gap-2 px-1 text-sm font-bold uppercase text-black"
                 >
                   <span className="truncate">{c.name}</span>
                   <span className="font-mono text-xs opacity-80">
@@ -146,17 +169,16 @@ export function CategorySidebar({
         </div>
       </ScrollArea>
 
+      {/* Pending delete panel */}
       {pendingCategory && (
-        <div className="border-2 border-black bg-red-500 p-2 text-xs font-bold text-white dark:border-zinc-100">
+        <div className="border-2 border-black bg-red-500 p-2 text-xs font-bold text-white brutal-shadow dark:border-zinc-100">
           <p className="mb-1.5 leading-snug">
             DELETE &ldquo;{pendingCategory.name.toUpperCase()}&rdquo;?{" "}
             <span className="font-mono font-normal">
               ({counts[pendingCategory.id]} videos)
             </span>
           </p>
-          <p className="mb-1 text-[10px] uppercase opacity-90">
-            Move videos to:
-          </p>
+          <p className="mb-1 text-[10px] uppercase opacity-90">Move videos to:</p>
           <div className="flex flex-col gap-1">
             {reassignTargets.map((t) => (
               <button
@@ -174,11 +196,7 @@ export function CategorySidebar({
             <button
               type="button"
               onClick={() => {
-                if (
-                  window.confirm(
-                    `Delete "${pendingCategory.name}" and all its videos?`
-                  )
-                ) {
+                if (window.confirm(`Delete "${pendingCategory.name}" and all its videos?`)) {
                   onRemove(pendingCategory.id, null);
                   setPendingDelete(null);
                 }
@@ -198,18 +216,17 @@ export function CategorySidebar({
         </div>
       )}
 
+      {/* Memory / clear section */}
       <div className="flex flex-col gap-1 border-t-2 border-black pt-2 dark:border-zinc-100">
         <button
           type="button"
           onClick={() => setMemoryOpen(!memoryOpen)}
-          className="flex h-7 items-center gap-1.5 border-2 border-black bg-white px-2 text-xs font-bold uppercase hover:bg-stone-200 dark:border-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800"
+          className="flex h-8 items-center gap-1.5 border-2 border-black bg-white px-2 text-xs font-bold uppercase hover:bg-stone-200 dark:border-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800"
         >
           <Trash2 className="h-3 w-3" />
           <span>Memory</span>
           <ChevronDown
-            className={`ml-auto h-3 w-3 transition-transform ${
-              memoryOpen ? "rotate-180" : ""
-            }`}
+            className={`ml-auto h-3 w-3 transition-transform ${memoryOpen ? "rotate-180" : ""}`}
           />
         </button>
 
@@ -246,17 +263,18 @@ export function CategorySidebar({
         )}
       </div>
 
-      <form onSubmit={submit} className="flex">
+      {/* Add category form */}
+      <form onSubmit={submit} className="flex brutal-shadow">
         <input
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="NEW CATEGORY"
-          className="h-8 min-w-0 flex-1 border-2 border-r-0 border-black bg-white px-2 text-xs font-bold uppercase placeholder:text-black/40 focus:outline-none dark:border-zinc-100 dark:bg-zinc-900"
+          className="h-9 min-w-0 flex-1 border-2 border-r-0 border-black bg-white px-2 text-xs font-bold uppercase placeholder:text-black/40 focus:outline-none dark:border-zinc-100 dark:bg-zinc-900"
         />
         <button
           type="submit"
           aria-label="Add category"
-          className="grid h-8 w-8 shrink-0 place-items-center border-2 border-black bg-yellow-300 hover:bg-yellow-400 active:translate-x-px active:translate-y-px dark:border-zinc-100 dark:text-black"
+          className="grid h-9 w-9 shrink-0 place-items-center border-2 border-black bg-yellow-300 hover:bg-yellow-400 active:translate-x-px active:translate-y-px dark:border-zinc-100 dark:text-black"
         >
           <Plus className="h-4 w-4" strokeWidth={3} />
         </button>

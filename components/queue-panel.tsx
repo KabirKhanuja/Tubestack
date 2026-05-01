@@ -30,7 +30,7 @@ export function QueuePanel({
 
   return (
     <div className="flex h-full w-full flex-col border-l-2 border-black bg-stone-50 dark:border-zinc-100 dark:bg-zinc-950">
-      <div className="flex items-center justify-between border-b-2 border-black bg-yellow-300 px-3 py-1.5 dark:border-zinc-100 dark:text-black">
+      <div className="flex items-center justify-between border-b-2 border-black bg-yellow-300 px-3 py-2 brutal-shadow dark:border-zinc-100 dark:text-black">
         <h2 className="text-sm font-black uppercase tracking-tight">Queue</h2>
         <span className="font-mono text-xs font-bold">
           {videos.length.toString().padStart(2, "0")}

@@ -9,7 +9,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { thumbnailUrl } from "@/lib/youtube";
-import type { Category } from "@/lib/types";
+import { CATEGORY_COLORS, type Category } from "@/lib/types";
 
 export type PendingVideo = {
   videoId: string;
@@ -27,6 +27,8 @@ type Props = {
   onClose: () => void;
 };
 
+const HATCH = "repeating-linear-gradient(-45deg,transparent 0px,transparent 5px,rgba(0,0,0,0.09) 5px,rgba(0,0,0,0.09) 6px)";
+
 export function CategoryPickerModal({
   open,
   loading,
@@ -39,7 +41,7 @@ export function CategoryPickerModal({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent
         showCloseButton={false}
-        className="border-2 border-black bg-white p-0 sm:max-w-lg dark:border-zinc-100 dark:bg-zinc-900"
+        className="border-2 border-black bg-white p-0 sm:max-w-lg brutal-shadow dark:border-zinc-100 dark:bg-zinc-900"
       >
         <DialogHeader className="border-b-2 border-black bg-yellow-300 px-4 py-2 dark:border-zinc-100 dark:text-black">
           <DialogTitle className="text-base font-black uppercase tracking-tight">
@@ -58,7 +60,7 @@ export function CategoryPickerModal({
             </div>
           ) : (
             <>
-              <div className="mb-3 flex gap-2 border-2 border-black bg-stone-50 p-2 dark:border-zinc-100 dark:bg-zinc-800">
+              <div className="mb-3 flex gap-2 border-2 border-black bg-stone-50 p-2 brutal-shadow-sm dark:border-zinc-100 dark:bg-zinc-800">
                 <div className="relative h-16 w-28 shrink-0 overflow-hidden border-2 border-black bg-stone-200 dark:border-zinc-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -80,16 +82,30 @@ export function CategoryPickerModal({
               </div>
 
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-                {categories.map((c) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={() => onPick(c.id)}
-                    className="flex h-14 items-center justify-center border-2 border-black bg-white px-2 text-sm font-black uppercase tracking-tight transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-yellow-300 hover:brutal-shadow active:translate-x-0 active:translate-y-0 active:shadow-none dark:border-zinc-100 dark:bg-zinc-900 dark:text-zinc-100 dark:hover:bg-yellow-400 dark:hover:text-black"
-                  >
-                    <span className="truncate">{c.name}</span>
-                  </button>
-                ))}
+                {categories.map((c) => {
+                  const color = c.color ?? CATEGORY_COLORS[0];
+                  return (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => onPick(c.id)}
+                      className="flex h-14 items-center justify-center border-2 border-black px-2 text-sm font-black uppercase tracking-tight transition-all hover:-translate-x-0.5 hover:-translate-y-0.5 dark:border-zinc-100 dark:text-black"
+                      style={{
+                        backgroundColor: color,
+                        backgroundImage: HATCH,
+                        boxShadow: "3px 3px 0 0 #000",
+                      }}
+                      onMouseEnter={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow = "5px 5px 0 0 #000";
+                      }}
+                      onMouseLeave={(e) => {
+                        (e.currentTarget as HTMLButtonElement).style.boxShadow = "3px 3px 0 0 #000";
+                      }}
+                    >
+                      <span className="truncate">{c.name}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               <button
