@@ -95,12 +95,17 @@ export function YouTubePlayer({
   const onEndedRef = useRef(onEnded);
   const startSecondsRef = useRef(startSeconds);
   const currentVideoRef = useRef<string | null>(null);
+  const latestVideoIdRef = useRef<string | null>(videoId);
   const [playerErrorCode, setPlayerErrorCode] = useState<number | null>(null);
 
   const isEmbedBlocked = useMemo(
     () => playerErrorCode === 101 || playerErrorCode === 150,
     [playerErrorCode]
   );
+
+  useEffect(() => {
+    latestVideoIdRef.current = videoId;
+  }, [videoId]);
 
   useEffect(() => {
     onProgressRef.current = onProgress;
@@ -131,10 +136,11 @@ export function YouTubePlayer({
         events: {
           onReady: () => {
             readyRef.current = true;
-            if (videoId) {
+            const currentVid = latestVideoIdRef.current;
+            if (currentVid) {
               setPlayerErrorCode(null);
-              currentVideoRef.current = videoId;
-              playerRef.current?.loadVideoById(videoId);
+              currentVideoRef.current = currentVid;
+              playerRef.current?.loadVideoById(currentVid);
               if (startSecondsRef.current > 0) {
                 setTimeout(() => {
                   playerRef.current?.seekTo(startSecondsRef.current, true);
