@@ -1,18 +1,31 @@
 "use client";
 
-import { useCallback, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { CategorySidebar } from "@/components/category-sidebar";
 import { QueuePanel } from "@/components/queue-panel";
 import { AddVideoBar } from "@/components/add-video-bar";
 import { YouTubePlayer } from "@/components/youtube-player";
+import { ThemeToggle } from "@/components/theme-toggle";
+import {
+  CategoryPickerModal,
+  type PendingVideo,
+} from "@/components/category-picker-modal";
 import { usePersistentState } from "@/lib/storage";
+import { reorder } from "@/lib/dnd";
 import {
   DEFAULT_CATEGORIES,
   type Category,
   type TubestackState,
   type Video,
 } from "@/lib/types";
-import { extractVideoId, fetchOEmbed, thumbnailUrl } from "@/lib/youtube";
+import {
+  canonicalUrl,
+  extractVideoId,
+  fetchOEmbed,
+  thumbnailUrl,
+} from "@/lib/youtube";
 
 const INITIAL_STATE: TubestackState = {
   categories: DEFAULT_CATEGORIES,
@@ -21,8 +34,9 @@ const INITIAL_STATE: TubestackState = {
   activeVideoId: null,
 };
 
+const COMPLETE_THRESHOLD = 0.95;
+
 function ensureDefaults(s: TubestackState): TubestackState {
-  // Make sure default categories always exist (don't allow them to be removed)
   const existingIds = new Set(s.categories.map((c) => c.id));
   const merged: Category[] = [
     ...DEFAULT_CATEGORIES.filter((c) => !existingIds.has(c.id)),
@@ -45,8 +59,11 @@ export default function Home() {
     INITIAL_STATE
   );
 
-  // Last persisted progress timestamp (per video) to throttle writes a bit.
   const lastSaveRef = useRef<Record<string, number>>({});
+
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickerLoading, setPickerLoading] = useState(false);
+  const [pendingVideo, setPendingVideo] = useState<PendingVideo | null>(null);
 
   const merged = useMemo(() => ensureDefaults(state), [state]);
   const { categories, videos, activeCategoryId, activeVideoId } = merged;
@@ -60,21 +77,21 @@ export default function Home() {
   }, [videos]);
 
   const filteredVideos = useMemo(() => {
-    const list =
-      activeCategoryId === "__all__"
-        ? videos
-        : videos.filter((v) => v.categoryId === activeCategoryId);
-    return [...list].sort((a, b) => {
-      // Incomplete first, then by addedAt desc
-      if (a.completed !== b.completed) return a.completed ? 1 : -1;
-      return b.addedAt - a.addedAt;
-    });
+    if (activeCategoryId === "__all__") return videos;
+    return videos.filter((v) => v.categoryId === activeCategoryId);
   }, [videos, activeCategoryId]);
 
   const activeVideo = useMemo(
     () => videos.find((v) => v.id === activeVideoId) ?? null,
     [videos, activeVideoId]
   );
+
+  const activeCategoryName = useMemo(() => {
+    if (activeCategoryId === "__all__") return "this view";
+    return categories.find((c) => c.id === activeCategoryId)?.name ?? "this category";
+  }, [activeCategoryId, categories]);
+
+  /* ---------- Categories ---------- */
 
   const addCategory = useCallback(
     (name: string) => {
@@ -90,28 +107,54 @@ export default function Home() {
           activeCategoryId: id,
         };
       });
+      toast.success(`Category "${name}" added`);
     },
     [setState]
   );
 
   const removeCategory = useCallback(
-    (id: string) => {
+    (id: string, moveToCategoryId: string | null) => {
       setState((s) => {
         const cat = s.categories.find((c) => c.id === id);
         if (!cat || !cat.removable) return s;
-        const fallback = "__all__";
+        const newCategories = s.categories.filter((c) => c.id !== id);
+        const newVideos = moveToCategoryId
+          ? s.videos.map((v) =>
+              v.categoryId === id ? { ...v, categoryId: moveToCategoryId } : v
+            )
+          : s.videos.filter((v) => v.categoryId !== id);
+        const stillActive = newVideos.some((v) => v.id === s.activeVideoId);
         return {
           ...s,
-          categories: s.categories.filter((c) => c.id !== id),
-          videos: s.videos.filter((v) => v.categoryId !== id),
+          categories: newCategories,
+          videos: newVideos,
           activeCategoryId:
-            s.activeCategoryId === id ? fallback : s.activeCategoryId,
-          activeVideoId:
-            s.videos.find((v) => v.id === s.activeVideoId)?.categoryId === id
-              ? null
-              : s.activeVideoId,
+            s.activeCategoryId === id ? "__all__" : s.activeCategoryId,
+          activeVideoId: stillActive ? s.activeVideoId : null,
         };
       });
+
+      const cat = categories.find((c) => c.id === id);
+      if (cat) {
+        if (moveToCategoryId) {
+          const target = categories.find((c) => c.id === moveToCategoryId);
+          toast.success(
+            `Deleted "${cat.name}", moved videos to "${target?.name ?? "another category"}"`
+          );
+        } else {
+          toast.success(`Deleted "${cat.name}"`);
+        }
+      }
+    },
+    [setState, categories]
+  );
+
+  const reorderCategories = useCallback(
+    (fromId: string, toId: string) => {
+      setState((s) => ({
+        ...s,
+        categories: reorder(s.categories, fromId, toId, (c) => c.id),
+      }));
     },
     [setState]
   );
@@ -123,6 +166,32 @@ export default function Home() {
     [setState]
   );
 
+  const clearCategory = useCallback(
+    (categoryId: string) => {
+      setState((s) => {
+        const newVideos = s.videos.filter((v) => v.categoryId !== categoryId);
+        const activeStillExists = newVideos.some(
+          (v) => v.id === s.activeVideoId
+        );
+        return {
+          ...s,
+          videos: newVideos,
+          activeVideoId: activeStillExists ? s.activeVideoId : null,
+        };
+      });
+      const cat = categories.find((c) => c.id === categoryId);
+      toast.success(`Cleared "${cat?.name ?? "category"}"`);
+    },
+    [setState, categories]
+  );
+
+  const clearAll = useCallback(() => {
+    setState((s) => ({ ...s, videos: [], activeVideoId: null }));
+    toast.success("Cleared all videos");
+  }, [setState]);
+
+  /* ---------- Videos ---------- */
+
   const selectVideo = useCallback(
     (id: string) => {
       setState((s) => ({ ...s, activeVideoId: id }));
@@ -130,49 +199,88 @@ export default function Home() {
     [setState]
   );
 
-  const addVideo = useCallback(
-    async (url: string, categoryId: string) => {
+  const handleAddUrl = useCallback(
+    async (url: string) => {
       const videoId = extractVideoId(url);
-      if (!videoId) throw new Error("Couldn't recognize a YouTube URL.");
-
-      // Avoid duplicates in the same category
-      if (videos.some((v) => v.videoId === videoId && v.categoryId === categoryId)) {
-        throw new Error("Already in this category.");
+      if (!videoId) {
+        toast.error("Couldn't recognize a YouTube URL");
+        return;
       }
-
-      let title = "Untitled video";
-      let author: string | undefined;
-      let thumbnail: string | undefined = thumbnailUrl(videoId);
+      setPickerOpen(true);
+      setPickerLoading(true);
+      setPendingVideo(null);
       try {
         const data = await fetchOEmbed(videoId);
-        title = data.title || title;
-        author = data.author_name;
-        if (data.thumbnail_url) thumbnail = data.thumbnail_url;
+        setPendingVideo({
+          videoId,
+          title: data.title || "Untitled video",
+          author: data.author_name,
+          thumbnail: data.thumbnail_url || thumbnailUrl(videoId),
+        });
       } catch {
-        // keep fallback title/thumbnail
+        setPendingVideo({
+          videoId,
+          title: "Untitled video",
+          thumbnail: thumbnailUrl(videoId),
+        });
+      } finally {
+        setPickerLoading(false);
       }
-
-      const newVideo: Video = {
-        id: `${videoId}-${Date.now()}`,
-        videoId,
-        title,
-        author,
-        thumbnail,
-        categoryId,
-        durationSeconds: 0,
-        watchedSeconds: 0,
-        completed: false,
-        addedAt: Date.now(),
-      };
-
-      setState((s) => ({
-        ...s,
-        videos: [newVideo, ...s.videos],
-        activeVideoId: s.activeVideoId ?? newVideo.id,
-      }));
     },
-    [setState, videos]
+    []
   );
+
+  const handlePickCategory = useCallback(
+    (categoryId: string) => {
+      if (!pendingVideo) return;
+      const { videoId, title, author, thumbnail } = pendingVideo;
+
+      let duplicate = false;
+      setState((s) => {
+        if (
+          s.videos.some(
+            (v) => v.videoId === videoId && v.categoryId === categoryId
+          )
+        ) {
+          duplicate = true;
+          return s;
+        }
+        const newVideo: Video = {
+          id: `${videoId}-${Date.now()}`,
+          videoId,
+          title,
+          author,
+          thumbnail,
+          categoryId,
+          durationSeconds: 0,
+          watchedSeconds: 0,
+          completed: false,
+          addedAt: Date.now(),
+        };
+        return {
+          ...s,
+          videos: [newVideo, ...s.videos],
+          activeVideoId: s.activeVideoId ?? newVideo.id,
+        };
+      });
+
+      setPickerOpen(false);
+      setPendingVideo(null);
+
+      const cat = categories.find((c) => c.id === categoryId);
+      if (duplicate) {
+        toast.warning(`Already in "${cat?.name ?? "this category"}"`);
+      } else {
+        toast.success(`Added to "${cat?.name ?? "queue"}"`);
+      }
+    },
+    [pendingVideo, setState, categories]
+  );
+
+  const closePicker = useCallback(() => {
+    setPickerOpen(false);
+    setPendingVideo(null);
+  }, []);
 
   const completeVideo = useCallback(
     (id: string, completed: boolean) => {
@@ -198,47 +306,61 @@ export default function Home() {
 
   const removeVideo = useCallback(
     (id: string) => {
+      const video = videos.find((v) => v.id === id);
       setState((s) => ({
         ...s,
         videos: s.videos.filter((v) => v.id !== id),
         activeVideoId: s.activeVideoId === id ? null : s.activeVideoId,
       }));
+      toast.success(`Removed "${video?.title ?? "video"}"`);
+    },
+    [setState, videos]
+  );
+
+  const reorderVideos = useCallback(
+    (fromId: string, toId: string) => {
+      setState((s) => ({
+        ...s,
+        videos: reorder(s.videos, fromId, toId, (v) => v.id),
+      }));
     },
     [setState]
   );
 
-  const clearCategory = useCallback(
-    (categoryId: string) => {
-      setState((s) => {
-        const newVideos = s.videos.filter((v) => v.categoryId !== categoryId);
-        const activeStillExists = newVideos.some(
-          (v) => v.id === s.activeVideoId
-        );
-        return {
-          ...s,
-          videos: newVideos,
-          activeVideoId: activeStillExists ? s.activeVideoId : null,
-        };
-      });
-    },
-    [setState]
-  );
-
-  const clearAll = useCallback(() => {
-    setState((s) => ({
-      ...s,
-      videos: [],
-      activeVideoId: null,
-    }));
-  }, [setState]);
+  /* ---------- Playback ---------- */
 
   const handleProgress = useCallback(
     (currentSeconds: number, durationSeconds: number) => {
       const id = activeVideoId;
       if (!id) return;
+
+      // auto-complete at 95%+
+      if (
+        durationSeconds > 0 &&
+        currentSeconds / durationSeconds >= COMPLETE_THRESHOLD
+      ) {
+        setState((s) => {
+          const v = s.videos.find((x) => x.id === id);
+          if (!v || v.completed) return s;
+          return {
+            ...s,
+            videos: s.videos.map((x) =>
+              x.id === id
+                ? {
+                    ...x,
+                    completed: true,
+                    watchedSeconds: durationSeconds,
+                    durationSeconds,
+                  }
+                : x
+            ),
+          };
+        });
+        return;
+      }
+
       const now = Date.now();
       const last = lastSaveRef.current[id] ?? 0;
-      // throttle writes to ~1.5s
       if (now - last < 1500) return;
       lastSaveRef.current[id] = now;
 
@@ -275,8 +397,56 @@ export default function Home() {
     }));
   }, [activeVideoId, setState]);
 
-  const defaultAddCategory =
-    activeCategoryId !== "__all__" ? activeCategoryId : categories[0]?.id ?? "podcast";
+  /* ---------- Keyboard shortcuts ---------- */
+
+  useEffect(() => {
+    function isEditable(target: EventTarget | null): boolean {
+      if (!(target instanceof HTMLElement)) return false;
+      const tag = target.tagName;
+      return (
+        tag === "INPUT" ||
+        tag === "TEXTAREA" ||
+        tag === "SELECT" ||
+        target.isContentEditable
+      );
+    }
+
+    function onKey(e: KeyboardEvent) {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      if (isEditable(e.target)) return;
+
+      if (e.key === "Escape") {
+        if (pickerOpen) return; // dialog handles it
+        if (activeVideoId) {
+          e.preventDefault();
+          setState((s) => ({ ...s, activeVideoId: null }));
+        }
+        return;
+      }
+
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        if (filteredVideos.length === 0) return;
+        e.preventDefault();
+        const idx = filteredVideos.findIndex((v) => v.id === activeVideoId);
+        let nextIdx: number;
+        if (idx === -1) {
+          nextIdx = e.key === "ArrowDown" ? 0 : filteredVideos.length - 1;
+        } else {
+          nextIdx =
+            e.key === "ArrowDown"
+              ? Math.min(filteredVideos.length - 1, idx + 1)
+              : Math.max(0, idx - 1);
+        }
+        const next = filteredVideos[nextIdx];
+        if (next) setState((s) => ({ ...s, activeVideoId: next.id }));
+      }
+    }
+
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [activeVideoId, filteredVideos, pickerOpen, setState]);
+
+  /* ---------- Render ---------- */
 
   return (
     <div className="flex h-dvh w-full bg-zinc-100 text-zinc-900 dark:bg-zinc-900 dark:text-zinc-100">
@@ -289,6 +459,7 @@ export default function Home() {
           onSelect={selectCategory}
           onAdd={addCategory}
           onRemove={removeCategory}
+          onReorder={reorderCategories}
           onClearCategory={clearCategory}
           onClearAll={clearAll}
         />
@@ -296,12 +467,11 @@ export default function Home() {
 
       {/* Middle: Player */}
       <main className="flex min-w-0 flex-1 flex-col gap-4 p-4 lg:p-6">
-        <div className="shrink-0">
-          <AddVideoBar
-            categories={categories}
-            defaultCategoryId={defaultAddCategory}
-            onAdd={addVideo}
-          />
+        <div className="flex shrink-0 items-center gap-2">
+          <div className="min-w-0 flex-1">
+            <AddVideoBar loading={pickerLoading} onSubmit={handleAddUrl} />
+          </div>
+          <ThemeToggle />
         </div>
 
         <div className="flex flex-1 flex-col items-stretch justify-start gap-4 overflow-hidden">
@@ -313,15 +483,26 @@ export default function Home() {
           />
 
           {activeVideo && (
-            <div className="rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
-              <h2 className="text-base font-semibold leading-tight">
-                {activeVideo.title}
-              </h2>
-              {activeVideo.author && (
-                <p className="mt-1 text-sm text-zinc-500">
-                  {activeVideo.author}
-                </p>
-              )}
+            <div className="flex items-start justify-between gap-3 rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="min-w-0 flex-1">
+                <h2 className="text-base font-semibold leading-tight">
+                  {activeVideo.title}
+                </h2>
+                {activeVideo.author && (
+                  <p className="mt-1 text-sm text-zinc-500">
+                    {activeVideo.author}
+                  </p>
+                )}
+              </div>
+              <a
+                href={canonicalUrl(activeVideo.videoId)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-zinc-300 px-3 py-1.5 text-xs font-medium text-zinc-700 transition-colors hover:border-red-500 hover:text-red-600 dark:border-zinc-700 dark:text-zinc-300 dark:hover:border-red-500 dark:hover:text-red-400"
+              >
+                <ExternalLink className="h-3.5 w-3.5" />
+                Watch on YouTube
+              </a>
             </div>
           )}
         </div>
@@ -332,11 +513,26 @@ export default function Home() {
         <QueuePanel
           videos={filteredVideos}
           activeVideoId={activeVideoId}
+          emptyMessage={
+            videos.length === 0
+              ? "No videos yet."
+              : `No videos in ${activeCategoryName}.`
+          }
           onSelect={selectVideo}
           onComplete={completeVideo}
           onRemove={removeVideo}
+          onReorder={reorderVideos}
         />
       </div>
+
+      <CategoryPickerModal
+        open={pickerOpen}
+        loading={pickerLoading}
+        pending={pendingVideo}
+        categories={categories}
+        onPick={handlePickCategory}
+        onClose={closePicker}
+      />
     </div>
   );
 }
