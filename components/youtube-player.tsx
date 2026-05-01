@@ -207,12 +207,17 @@ export function YouTubePlayer({
 
   return (
     <div className="relative w-full overflow-hidden rounded-xl bg-black aspect-video shadow-lg ring-1 ring-white/10">
-      {!videoId && (
-        <div className="absolute inset-0 flex items-center justify-center text-zinc-400 text-sm">
-          Select a video from the queue to start watching
-        </div>
-      )}
-      <div ref={containerRef} className="absolute inset-0" />
+      <div className="absolute inset-0">
+        <div ref={containerRef} className="h-full w-full" />
+      </div>
+      <div
+        aria-hidden={Boolean(videoId)}
+        className={`pointer-events-none absolute inset-0 flex items-center justify-center text-sm text-zinc-400 transition-opacity duration-200 ${
+          videoId ? "opacity-0" : "opacity-100"
+        }`}
+      >
+        Select a video from the queue to start watching
+      </div>
     </div>
   );
 }
