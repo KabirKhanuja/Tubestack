@@ -9,6 +9,7 @@ import { AddVideoBar } from "@/components/add-video-bar";
 import { YouTubePlayer } from "@/components/youtube-player";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Resizer } from "@/components/resizer";
+import { InfoButton } from "@/components/info-button";
 import {
   CategoryPickerModal,
   type PendingVideo,
@@ -542,6 +543,7 @@ export default function Home() {
           <div className="min-w-0 flex-1">
             <AddVideoBar loading={pickerLoading} onSubmit={handleAddUrl} />
           </div>
+          <InfoButton />
           <ThemeToggle />
         </div>
 
