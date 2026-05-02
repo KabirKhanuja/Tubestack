@@ -193,3 +193,131 @@
   30% { transform: scale(1); }
   100% { transform: scale(1); }
 }
+
+/* ================================================
+ * Neo-brutalist Sonner toasts
+ * Applied via toastOptions.classNames in sonner.tsx
+ * ================================================ */
+.brutal-toast {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  padding: 10px 12px;
+  background: #ffffff;
+  color: #000000;
+  border: 2px solid #000000;
+  border-radius: 0;
+  box-shadow: 4px 4px 0 0 #000000;
+  font-family: var(--font-sans), ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  pointer-events: auto;
+}
+.dark .brutal-toast {
+  background: #0a0a0a;
+  color: #fafafa;
+  border-color: #fafafa;
+  box-shadow: 4px 4px 0 0 #fafafa;
+}
+
+.brutal-toast-title {
+  font-size: 12.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  word-break: break-word;
+}
+.brutal-toast-desc {
+  margin-top: 2px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  opacity: 0.75;
+  word-break: break-word;
+}
+.brutal-toast-icon {
+  flex-shrink: 0;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border: 2px solid #000000;
+  background: #ffffff;
+}
+.dark .brutal-toast-icon {
+  border-color: #fafafa;
+  background: #0a0a0a;
+}
+
+/* Variant accents — recolor only the icon tile, keep card neutral */
+.brutal-toast-success .brutal-toast-icon {
+  background: #4ade80; /* green-400 */
+  color: #000000;
+}
+.brutal-toast-error .brutal-toast-icon {
+  background: #ef4444; /* red-500 */
+  color: #ffffff;
+}
+.brutal-toast-warning .brutal-toast-icon {
+  background: #facc15; /* yellow-400 */
+  color: #000000;
+}
+.brutal-toast-info .brutal-toast-icon {
+  background: #60a5fa; /* blue-400 */
+  color: #000000;
+}
+.brutal-toast-loading .brutal-toast-icon {
+  background: #facc15;
+  color: #000000;
+}
+
+/* Action / cancel buttons inside toasts */
+.brutal-toast-action,
+.brutal-toast-cancel {
+  margin-left: 8px;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  border: 2px solid #000000;
+  border-radius: 0;
+  background: #facc15;
+  color: #000000;
+  cursor: pointer;
+}
+.brutal-toast-cancel {
+  background: #ffffff;
+}
+.dark .brutal-toast-action,
+.dark .brutal-toast-cancel {
+  border-color: #fafafa;
+}
+.dark .brutal-toast-cancel {
+  background: #0a0a0a;
+  color: #fafafa;
+}
+
+/* Force bottom-right toast position on mobile (sonner's mobile defaults
+ * stretch toasts edge-to-edge which made them appear bottom-left). */
+@media (max-width: 600px) {
+  [data-sonner-toaster][data-y-position="bottom"][data-x-position="right"] {
+    --width: min(340px, calc(100vw - 32px));
+    width: min(340px, calc(100vw - 32px)) !important;
+    max-width: min(340px, calc(100vw - 32px)) !important;
+    right: 16px !important;
+    left: auto !important;
+    bottom: 16px !important;
+  }
+  [data-sonner-toaster][data-y-position="bottom"][data-x-position="right"]
+    [data-sonner-toast] {
+    width: 100% !important;
+    left: auto !important;
+    right: 0 !important;
+  }
+}

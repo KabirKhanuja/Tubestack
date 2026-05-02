@@ -24,8 +24,8 @@ export type Layout = {
 };
 
 export const DEFAULT_LAYOUT: Layout = {
-  sidebarWidth: 240,
-  queueWidth: 340,
+  sidebarWidth: 300,
+  queueWidth: 425,
 };
 
 export type TubestackState = {
