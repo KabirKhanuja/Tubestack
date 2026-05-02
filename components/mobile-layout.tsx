@@ -70,11 +70,8 @@ export function MobileLayout(props: Props) {
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-stone-100 text-black dark:bg-zinc-950 dark:text-zinc-100">
       {/* URL bar with brand */}
       <div className="flex shrink-0 items-center gap-2 border-b-2 border-black bg-yellow-300 p-2 dark:border-zinc-100 dark:text-black">
-        <div className="flex h-10 shrink-0 items-center gap-1.5 border-2 border-black bg-white px-2 dark:border-zinc-100 dark:bg-zinc-900 dark:text-zinc-100">
-          <Layers className="h-4 w-4 text-red-600" strokeWidth={2.5} />
-          <span className="text-xs font-black uppercase tracking-tight">
-            Tubestack
-          </span>
+        <div className="grid h-10 w-10 shrink-0 place-items-center border-2 border-black bg-white dark:border-zinc-100 dark:bg-zinc-900 dark:text-zinc-100">
+          <Layers className="h-5 w-5 text-red-600" strokeWidth={2.5} />
         </div>
         <div className="min-w-0 flex-1">
           <AddVideoBar
