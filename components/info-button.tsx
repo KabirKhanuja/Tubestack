@@ -26,36 +26,35 @@ export function InfoButton() {
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
           showCloseButton={false}
-          className="border-2 border-black bg-white p-0 sm:max-w-sm brutal-shadow dark:border-zinc-100 dark:bg-zinc-900"
+          className="w-[calc(100%-1.5rem)] max-w-[calc(100%-1.5rem)] overflow-hidden border-2 border-black bg-white p-0 sm:max-w-sm brutal-shadow dark:border-zinc-100 dark:bg-zinc-900"
         >
           <DialogHeader className="border-b-2 border-black bg-yellow-300 px-4 py-3 dark:border-zinc-100 dark:text-black">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-2">
               <DialogTitle className="text-base font-black uppercase tracking-tight">
                 Info
               </DialogTitle>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
-                className="opacity-70 hover:opacity-100"
+                aria-label="Close"
+                className="shrink-0 opacity-70 hover:opacity-100"
               >
                 <X className="h-4 w-4" strokeWidth={3} />
               </button>
             </div>
           </DialogHeader>
 
-          <div className="p-4 flex flex-col gap-4 text-sm font-bold uppercase tracking-tight text-center">
-            <p>
-              made by (for) kabir khanuja lol
-            </p>
-            <p>
-              to contribute :{" "}
+          <div className="flex flex-col gap-3 px-4 py-4 text-center text-sm font-bold uppercase tracking-tight">
+            <p>made by (for) kabir khanuja lol</p>
+            <p className="flex flex-col items-center gap-1.5">
+              <span className="text-xs opacity-70">to contribute</span>
               <a
                 href="https://github.com/KabirKhanuja/Tubestack"
                 target="_blank"
                 rel="noreferrer"
-                className="inline-block border-b-2 border-black hover:bg-yellow-300 dark:border-zinc-100 dark:hover:text-black"
+                className="block max-w-full break-all border-b-2 border-black px-1 text-xs hover:bg-yellow-300 dark:border-zinc-100 dark:hover:text-black"
               >
-                https://github.com/KabirKhanuja/Tubestack
+                github.com/KabirKhanuja/Tubestack
               </a>
             </p>
           </div>

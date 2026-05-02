@@ -9,7 +9,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <ThemeProvider>
       <SplashScreen />
       {children}
-      <Toaster richColors position="bottom-right" />
+      <Toaster position="bottom-right" />
     </ThemeProvider>
   );
 }

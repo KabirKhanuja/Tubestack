@@ -22,14 +22,14 @@ const ThemeContext = createContext<ThemeContextValue | null>(null);
 const STORAGE_KEY = "tubestack:theme";
 
 function readStoredTheme(): Theme {
-  if (typeof window === "undefined") return "system";
+  if (typeof window === "undefined") return "light";
   try {
     const v = window.localStorage.getItem(STORAGE_KEY);
     if (v === "light" || v === "dark" || v === "system") return v;
   } catch {
     // ignore
   }
-  return "system";
+  return "light";
 }
 
 function systemPrefersDark(): boolean {
@@ -40,7 +40,7 @@ function systemPrefersDark(): boolean {
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system");
+  const [theme, setThemeState] = useState<Theme>("light");
   const [resolvedTheme, setResolvedTheme] = useState<ResolvedTheme>("light");
 
   // Sync from storage on mount
@@ -92,5 +92,5 @@ export function useTheme(): ThemeContextValue {
 }
 
 // Inline script string used by RootLayout to set the initial theme class
-// before paint, preventing flash-of-wrong-theme.
-export const themeInitScript = `(function(){try{var t=localStorage.getItem('${STORAGE_KEY}')||'system';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
+// before paint, preventing flash-of-wrong-theme. Defaults to light.
+export const themeInitScript = `(function(){try{var t=localStorage.getItem('${STORAGE_KEY}')||'light';var d=t==='dark'||(t==='system'&&matchMedia('(prefers-color-scheme: dark)').matches);if(d)document.documentElement.classList.add('dark');}catch(e){}})();`;
