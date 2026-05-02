@@ -1,13 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Layers, Plus } from "lucide-react";
+import { ExternalLink, Layers, Plus, Trash2 } from "lucide-react";
 import { AddVideoBar } from "@/components/add-video-bar";
 import { YouTubePlayer } from "@/components/youtube-player";
 import { QueuePanel } from "@/components/queue-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InfoButton } from "@/components/info-button";
 import { AddCategoryModal } from "@/components/add-category-modal";
+import { MemoryModal } from "@/components/memory-modal";
 import { canonicalUrl } from "@/lib/youtube";
 import type { Category, Video } from "@/lib/types";
 
@@ -25,6 +26,8 @@ type Props = {
   onAddUrl: (url: string) => Promise<void> | void;
   onSelectCategory: (id: string) => void;
   onAddCategory: (name: string) => void;
+  onClearCategory: (id: string) => void;
+  onClearAll: () => void;
   onSelectVideo: (id: string) => void;
   onCompleteVideo: (id: string, completed: boolean) => void;
   onRemoveVideo: (id: string) => void;
@@ -36,6 +39,7 @@ type Props = {
 export function MobileLayout(props: Props) {
   const totalCount = Object.values(props.counts).reduce((a, b) => a + b, 0);
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
+  const [memoryOpen, setMemoryOpen] = useState(false);
 
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-stone-100 text-black dark:bg-zinc-950 dark:text-zinc-100">
@@ -144,10 +148,30 @@ export function MobileLayout(props: Props) {
         />
       </div>
 
+      {/* Floating Memory FAB (bottom-left) */}
+      <button
+        type="button"
+        onClick={() => setMemoryOpen(true)}
+        aria-label="Memory"
+        title="Memory"
+        className="fixed bottom-4 left-4 z-40 grid h-12 w-12 place-items-center rounded-full border-2 border-black bg-white text-black brutal-shadow transition-transform hover:-translate-x-px hover:-translate-y-px active:translate-x-px active:translate-y-px active:shadow-none dark:border-zinc-100 dark:bg-zinc-900 dark:text-zinc-100"
+      >
+        <Trash2 className="h-5 w-5" strokeWidth={2.5} />
+      </button>
+
       <AddCategoryModal
         open={addCategoryOpen}
         onClose={() => setAddCategoryOpen(false)}
         onSubmit={props.onAddCategory}
+      />
+
+      <MemoryModal
+        open={memoryOpen}
+        categories={props.categories}
+        counts={props.counts}
+        onClose={() => setMemoryOpen(false)}
+        onClearCategory={props.onClearCategory}
+        onClearAll={props.onClearAll}
       />
     </div>
   );

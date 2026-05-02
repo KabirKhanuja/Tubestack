@@ -572,6 +572,8 @@ export default function Home() {
           onAddUrl={handleAddUrl}
           onSelectCategory={selectCategory}
           onAddCategory={addCategory}
+          onClearCategory={clearCategory}
+          onClearAll={clearAll}
           onSelectVideo={selectVideo}
           onCompleteVideo={completeVideo}
           onRemoveVideo={removeVideo}
