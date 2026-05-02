@@ -8,6 +8,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import { useConfirm } from "@/components/confirm-modal";
 import type { Category } from "@/lib/types";
 
 type Props = {
@@ -28,6 +29,7 @@ export function MemoryModal({
   onClearAll,
 }: Props) {
   const totalCount = Object.values(counts).reduce((a, b) => a + b, 0);
+  const confirm = useConfirm();
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -69,14 +71,13 @@ export function MemoryModal({
                     key={c.id}
                     type="button"
                     disabled={disabled}
-                    onClick={() => {
-                      if (
-                        window.confirm(
-                          `Clear all videos from "${c.name}"?`
-                        )
-                      ) {
-                        onClearCategory(c.id);
-                      }
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: `Clear ${c.name}`,
+                        message: `Clear all videos from "${c.name}"?`,
+                        confirmText: "Clear",
+                      });
+                      if (ok) onClearCategory(c.id);
                     }}
                     className="flex items-center justify-between gap-2 border-2 border-black bg-white px-3 py-2 text-xs font-black uppercase tracking-tight text-black transition-colors hover:bg-red-500 hover:text-white disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-white disabled:hover:text-black dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-red-500 dark:disabled:hover:bg-zinc-950 dark:disabled:hover:text-zinc-100"
                   >
@@ -96,10 +97,13 @@ export function MemoryModal({
           <button
             type="button"
             disabled={totalCount === 0}
-            onClick={() => {
-              if (
-                window.confirm("Clear ALL videos from all categories?")
-              ) {
+            onClick={async () => {
+              const ok = await confirm({
+                title: "Clear all memory",
+                message: "Clear ALL videos from all categories?",
+                confirmText: "Clear All",
+              });
+              if (ok) {
                 onClearAll();
                 onClose();
               }

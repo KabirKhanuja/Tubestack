@@ -9,6 +9,7 @@ import {
   X,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useConfirm } from "@/components/confirm-modal";
 import { useDragReorder } from "@/lib/dnd";
 import { CATEGORY_COLORS, type Category } from "@/lib/types";
 
@@ -65,6 +66,7 @@ export function CategorySidebar({
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [videoDropTarget, setVideoDropTarget] = useState<string | null>(null);
+  const confirm = useConfirm();
 
   const dnd = useDragReorder(onReorder);
 
@@ -87,10 +89,15 @@ export function CategorySidebar({
     setNewName("");
   }
 
-  function handleDeleteClick(id: string) {
+  async function handleDeleteClick(id: string) {
     const count = counts[id] ?? 0;
     if (count === 0) {
-      if (window.confirm("Delete this category?")) onRemove(id, null);
+      const ok = await confirm({
+        title: "Delete category",
+        message: "Delete this category?",
+        confirmText: "Delete",
+      });
+      if (ok) onRemove(id, null);
       return;
     }
     setPendingDelete(id);
@@ -245,8 +252,13 @@ export function CategorySidebar({
             ))}
             <button
               type="button"
-              onClick={() => {
-                if (window.confirm(`Delete "${pendingCategory.name}" and all its videos?`)) {
+              onClick={async () => {
+                const ok = await confirm({
+                  title: "Delete category",
+                  message: `Delete "${pendingCategory.name}" and all its videos?`,
+                  confirmText: "Delete",
+                });
+                if (ok) {
                   onRemove(pendingCategory.id, null);
                   setPendingDelete(null);
                 }
@@ -286,10 +298,13 @@ export function CategorySidebar({
               <button
                 key={c.id}
                 type="button"
-                onClick={() => {
-                  if (window.confirm(`Clear all videos from "${c.name}"?`)) {
-                    onClearCategory(c.id);
-                  }
+                onClick={async () => {
+                  const ok = await confirm({
+                    title: `Clear ${c.name}`,
+                    message: `Clear all videos from "${c.name}"?`,
+                    confirmText: "Clear",
+                  });
+                  if (ok) onClearCategory(c.id);
                 }}
                 className="flex items-center gap-1 px-1.5 py-1 text-left text-[11px] font-bold uppercase hover:bg-red-500 hover:text-white"
               >
@@ -299,10 +314,13 @@ export function CategorySidebar({
             ))}
             <button
               type="button"
-              onClick={() => {
-                if (window.confirm("Clear ALL videos from all categories?")) {
-                  onClearAll();
-                }
+              onClick={async () => {
+                const ok = await confirm({
+                  title: "Clear all memory",
+                  message: "Clear ALL videos from all categories?",
+                  confirmText: "Clear All",
+                });
+                if (ok) onClearAll();
               }}
               className="flex items-center gap-1 border-t-2 border-black px-1.5 py-1 text-left text-[11px] font-black uppercase text-red-700 hover:bg-red-500 hover:text-white dark:border-zinc-100"
             >

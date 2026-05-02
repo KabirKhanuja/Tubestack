@@ -302,3 +302,22 @@
   background: #0a0a0a;
   color: #fafafa;
 }
+
+/* Force bottom-right toast position on mobile (sonner's mobile defaults
+ * stretch toasts edge-to-edge which made them appear bottom-left). */
+@media (max-width: 600px) {
+  [data-sonner-toaster][data-y-position="bottom"][data-x-position="right"] {
+    --width: min(340px, calc(100vw - 32px));
+    width: min(340px, calc(100vw - 32px)) !important;
+    max-width: min(340px, calc(100vw - 32px)) !important;
+    right: 16px !important;
+    left: auto !important;
+    bottom: 16px !important;
+  }
+  [data-sonner-toaster][data-y-position="bottom"][data-x-position="right"]
+    [data-sonner-toast] {
+    width: 100% !important;
+    left: auto !important;
+    right: 0 !important;
+  }
+}
