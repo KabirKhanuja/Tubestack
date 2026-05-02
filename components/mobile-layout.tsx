@@ -1,11 +1,13 @@
 "use client";
 
-import { ExternalLink } from "lucide-react";
+import { useState } from "react";
+import { ExternalLink, Layers, Plus } from "lucide-react";
 import { AddVideoBar } from "@/components/add-video-bar";
 import { YouTubePlayer } from "@/components/youtube-player";
 import { QueuePanel } from "@/components/queue-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InfoButton } from "@/components/info-button";
+import { AddCategoryModal } from "@/components/add-category-modal";
 import { canonicalUrl } from "@/lib/youtube";
 import type { Category, Video } from "@/lib/types";
 
@@ -22,6 +24,7 @@ type Props = {
   pickerLoading: boolean;
   onAddUrl: (url: string) => Promise<void> | void;
   onSelectCategory: (id: string) => void;
+  onAddCategory: (name: string) => void;
   onSelectVideo: (id: string) => void;
   onCompleteVideo: (id: string, completed: boolean) => void;
   onRemoveVideo: (id: string) => void;
@@ -32,11 +35,18 @@ type Props = {
 
 export function MobileLayout(props: Props) {
   const totalCount = Object.values(props.counts).reduce((a, b) => a + b, 0);
+  const [addCategoryOpen, setAddCategoryOpen] = useState(false);
 
   return (
     <div className="flex h-dvh w-full flex-col overflow-hidden bg-stone-100 text-black dark:bg-zinc-950 dark:text-zinc-100">
-      {/* URL bar */}
+      {/* URL bar with brand */}
       <div className="flex shrink-0 items-center gap-2 border-b-2 border-black bg-yellow-300 p-2 dark:border-zinc-100 dark:text-black">
+        <div className="flex h-10 shrink-0 items-center gap-1.5 border-2 border-black bg-white px-2 dark:border-zinc-100 dark:bg-zinc-900 dark:text-zinc-100">
+          <Layers className="h-4 w-4 text-red-600" strokeWidth={2.5} />
+          <span className="text-xs font-black uppercase tracking-tight">
+            Tubestack
+          </span>
+        </div>
         <div className="min-w-0 flex-1">
           <AddVideoBar
             loading={props.pickerLoading}
@@ -110,6 +120,14 @@ export function MobileLayout(props: Props) {
               color={c.color}
             />
           ))}
+          <button
+            type="button"
+            onClick={() => setAddCategoryOpen(true)}
+            aria-label="Add category"
+            className="grid h-7 w-7 shrink-0 place-items-center border-2 border-black bg-yellow-300 text-black hover:bg-yellow-400 active:translate-x-px active:translate-y-px dark:border-zinc-100"
+          >
+            <Plus className="h-4 w-4" strokeWidth={3} />
+          </button>
         </div>
       </div>
 
@@ -125,6 +143,12 @@ export function MobileLayout(props: Props) {
           onReorder={props.onReorderVideos}
         />
       </div>
+
+      <AddCategoryModal
+        open={addCategoryOpen}
+        onClose={() => setAddCategoryOpen(false)}
+        onSubmit={props.onAddCategory}
+      />
     </div>
   );
 }

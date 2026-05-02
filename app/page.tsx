@@ -571,6 +571,7 @@ export default function Home() {
           pickerLoading={pickerLoading}
           onAddUrl={handleAddUrl}
           onSelectCategory={selectCategory}
+          onAddCategory={addCategory}
           onSelectVideo={selectVideo}
           onCompleteVideo={completeVideo}
           onRemoveVideo={removeVideo}

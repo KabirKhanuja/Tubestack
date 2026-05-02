@@ -319,7 +319,7 @@ export function CategorySidebar({
           value={newName}
           onChange={(e) => setNewName(e.target.value)}
           placeholder="NEW CATEGORY"
-          className="h-9 min-w-0 flex-1 border-2 border-r-0 border-black bg-white px-2 text-xs font-bold uppercase placeholder:text-black/40 focus:outline-none dark:border-zinc-100 dark:bg-zinc-900"
+          className="h-9 min-w-0 flex-1 border-2 border-r-0 border-black bg-white px-2 text-xs font-bold uppercase text-black placeholder:text-black/40 focus:outline-none dark:border-zinc-100 dark:bg-zinc-900 dark:text-zinc-100 dark:placeholder:text-zinc-100/40"
         />
         <button
           type="submit"
