@@ -383,6 +383,33 @@ export default function Home() {
     [setState, videos]
   );
 
+  const resetVideo = useCallback(
+    (id: string) => {
+      let resetTitle = "";
+      setState((s) => {
+        const v = s.videos.find((x) => x.id === id);
+        if (!v) return s;
+        resetTitle = v.title;
+        return {
+          ...s,
+          videos: s.videos.map((x) =>
+            x.id === id
+              ? { ...x, watchedSeconds: 0, completed: false }
+              : x
+          ),
+          // If the reset target is currently playing, drop it so the next click
+          // reloads from the start instead of continuing where it was.
+          activeVideoId: s.activeVideoId === id ? null : s.activeVideoId,
+        };
+      });
+      lastSaveRef.current[id] = 0;
+      if (resetTitle) {
+        toast.success(`Reset "${resetTitle}" to start`);
+      }
+    },
+    [setState]
+  );
+
   const reorderVideos = useCallback(
     (fromId: string, toId: string) => {
       setState((s) => ({
@@ -578,6 +605,7 @@ export default function Home() {
           onSelectVideo={selectVideo}
           onCompleteVideo={completeVideo}
           onRemoveVideo={removeVideo}
+          onResetVideo={resetVideo}
           onReorderVideos={reorderVideos}
           onProgress={handleProgress}
           onEnded={handleEnded}
@@ -687,6 +715,7 @@ export default function Home() {
           onSelect={selectVideo}
           onComplete={completeVideo}
           onRemove={removeVideo}
+          onReset={resetVideo}
           onReorder={reorderVideos}
         />
       </div>

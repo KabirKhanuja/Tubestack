@@ -1,6 +1,6 @@
 "use client";
 
-import { ExternalLink, GripVertical, Trash2 } from "lucide-react";
+import { ExternalLink, GripVertical, RotateCcw, Trash2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { canonicalUrl, formatDuration, thumbnailUrl } from "@/lib/youtube";
@@ -14,6 +14,7 @@ type Props = {
   onSelect: (id: string) => void;
   onComplete: (id: string, completed: boolean) => void;
   onRemove: (id: string) => void;
+  onReset: (id: string) => void;
   onReorder: (fromId: string, toId: string) => void;
 };
 
@@ -24,6 +25,7 @@ export function QueuePanel({
   onSelect,
   onComplete,
   onRemove,
+  onReset,
   onReorder,
 }: Props) {
   const dnd = useDragReorder(onReorder);
@@ -149,29 +151,44 @@ export function QueuePanel({
                         </div>
                       </div>
                     </button>
-                    <div className="flex flex-col items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
-                      <a
-                        href={canonicalUrl(v.videoId)}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        title="Watch on YouTube"
-                        className="border-2 border-black p-0.5 hover:bg-red-500 hover:text-white dark:border-zinc-100"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink className="h-3 w-3" />
-                      </a>
+                    <div className="flex flex-col items-center gap-0.5">
                       <button
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onRemove(v.id);
+                          onReset(v.id);
                         }}
-                        aria-label="Remove video"
-                        title="Remove"
-                        className="border-2 border-black p-0.5 hover:bg-red-500 hover:text-white dark:border-zinc-100"
+                        disabled={v.watchedSeconds === 0 && !v.completed}
+                        aria-label="Reset progress"
+                        title="Reset progress"
+                        className="grid h-6 w-6 place-items-center rounded-full border-2 border-black bg-white text-black transition-all hover:bg-yellow-300 active:translate-x-px active:translate-y-px disabled:cursor-not-allowed disabled:opacity-30 disabled:hover:bg-white dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-yellow-300 dark:hover:text-black dark:disabled:hover:bg-zinc-950 dark:disabled:hover:text-zinc-100"
                       >
-                        <Trash2 className="h-3 w-3" />
+                        <RotateCcw className="h-3 w-3" strokeWidth={3} />
                       </button>
+                      <div className="flex flex-col items-center gap-0.5 opacity-0 transition-opacity group-hover:opacity-100">
+                        <a
+                          href={canonicalUrl(v.videoId)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          title="Watch on YouTube"
+                          className="border-2 border-black p-0.5 hover:bg-red-500 hover:text-white dark:border-zinc-100"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ExternalLink className="h-3 w-3" />
+                        </a>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onRemove(v.id);
+                          }}
+                          aria-label="Remove video"
+                          title="Remove"
+                          className="border-2 border-black p-0.5 hover:bg-red-500 hover:text-white dark:border-zinc-100"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 </li>
