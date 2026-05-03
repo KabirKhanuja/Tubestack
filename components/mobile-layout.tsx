@@ -33,6 +33,7 @@ type Props = {
   onSelectVideo: (id: string) => void;
   onCompleteVideo: (id: string, completed: boolean) => void;
   onRemoveVideo: (id: string) => void;
+  onResetVideo: (id: string) => void;
   onReorderVideos: (fromId: string, toId: string) => void;
   onProgress: (currentSeconds: number, durationSeconds: number) => void;
   onEnded: () => void;
@@ -167,6 +168,7 @@ export function MobileLayout(props: Props) {
           onSelect={props.onSelectVideo}
           onComplete={props.onCompleteVideo}
           onRemove={props.onRemoveVideo}
+          onReset={props.onResetVideo}
           onReorder={props.onReorderVideos}
         />
       </div>

@@ -213,7 +213,18 @@ export function YouTubePlayer({
   useEffect(() => {
     setPlayerErrorCode(null);
     if (!readyRef.current || !playerRef.current) return;
-    if (videoId && videoId !== currentVideoRef.current) {
+    if (!videoId) {
+      // No active video — pause playback and clear the cached id so that
+      // re-selecting the same video later triggers a fresh loadVideoById.
+      try {
+        playerRef.current.pauseVideo();
+      } catch {
+        // ignore
+      }
+      currentVideoRef.current = null;
+      return;
+    }
+    if (videoId !== currentVideoRef.current) {
       currentVideoRef.current = videoId;
       playerRef.current.loadVideoById(videoId);
       if (startSecondsRef.current > 0) {
