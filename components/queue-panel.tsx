@@ -39,7 +39,7 @@ export function QueuePanel({
         </span>
       </div>
 
-      <ScrollArea className="flex-1">
+      <ScrollArea className="min-h-0 flex-1">
         {videos.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-1 px-4 py-12 text-center">
             <p className="text-sm font-bold uppercase">
