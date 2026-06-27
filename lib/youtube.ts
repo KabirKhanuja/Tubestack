@@ -5,8 +5,14 @@ export function extractVideoId(input: string): string | null {
   // Already an 11-char ID
   if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) return trimmed;
 
+  // Add a protocol when missing so `new URL` can parse bare hosts
+  // (e.g. "youtube.com/watch?v=ID", "youtu.be/ID").
+  const withProtocol = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+
   try {
-    const url = new URL(trimmed);
+    const url = new URL(withProtocol);
     const host = url.hostname.replace(/^www\./, "");
 
     if (host === "youtu.be") {
