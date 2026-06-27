@@ -101,6 +101,8 @@ export function MemoryModal({
               const ok = await confirm({
                 title: "Clear all memory",
                 message: "Clear ALL videos from all categories?",
+                description:
+                    "This also deletes your custom playlists and will reset back to the default categories :)",
                 confirmText: "Clear All",
               });
               if (ok) {

@@ -19,6 +19,7 @@ import {
 export type ConfirmOptions = {
   title?: string;
   message: string;
+  description?: string;
   confirmText?: string;
   cancelText?: string;
 };
@@ -103,9 +104,16 @@ export function ConfirmProvider({ children }: { children: React.ReactNode }) {
           </DialogHeader>
 
           <div className="flex flex-col gap-4 p-4">
-            <p className="text-sm font-bold uppercase leading-snug tracking-tight">
-              {options.message}
-            </p>
+            <div className="flex flex-col gap-1.5">
+              <p className="text-sm font-bold uppercase leading-snug tracking-tight">
+                {options.message}
+              </p>
+              {options.description && (
+                <p className="text-[11px] font-bold uppercase leading-snug tracking-tight opacity-60">
+                  {options.description}
+                </p>
+              )}
+            </div>
             <div className="flex gap-2">
               <button
                 type="button"

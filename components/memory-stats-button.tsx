@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Database, X } from "lucide-react";
+import { Brand } from "@/components/brand";
 import {
   Dialog,
   DialogContent,
@@ -158,7 +159,7 @@ export function MemoryStatsButton() {
               </button>
             </div>
             <DialogDescription className="text-[11px] font-bold uppercase opacity-80">
-              Local storage used by Tubestack.
+              Local storage used by <Brand />.
             </DialogDescription>
           </DialogHeader>
 
