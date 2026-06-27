@@ -8,6 +8,42 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Brand, withBrand } from "@/components/brand";
+
+const FEATURES: [string, string][] = [
+  ["Folders", "create, rename, delete, and drag to reorder your playlists"],
+  [
+    "Queue",
+    "all your videos in one panel, drag to reorder, track progress automatically",
+  ],
+  [
+    "Progress",
+    "red bar shows how much you have watched, updates as you watch",
+  ],
+  ["Reset", "circular arrow on any video card resets progress to zero"],
+  [
+    "Memory",
+    "floating button (bottom right) shows exactly how much localStorage Tubestack is using, broken down by folder",
+  ],
+  ["Pomodoro", "built-in focus timer with sound alert when done"],
+  ["To-do", "quick task list that lives alongside your videos"],
+  ["Random Joke", "because why not"],
+];
+
+function Section({
+  title,
+  children,
+}: {
+  title: React.ReactNode;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col gap-1.5">
+      <h3 className="text-sm font-black uppercase tracking-tight">{title}</h3>
+      <div className="text-[13px] font-normal leading-relaxed">{children}</div>
+    </div>
+  );
+}
 
 export function InfoButton() {
   const [open, setOpen] = useState(false);
@@ -44,19 +80,57 @@ export function InfoButton() {
             </div>
           </DialogHeader>
 
-          <div className="flex flex-col gap-3 px-4 py-4 text-center text-sm font-bold uppercase tracking-tight">
-            <p>made by (for) kabir khanuja lol</p>
-            <p className="flex flex-col items-center gap-1.5">
-              <span className="text-xs opacity-70">to contribute</span>
-              <a
-                href="https://github.com/KabirKhanuja/Tubestack"
-                target="_blank"
-                rel="noreferrer"
-                className="block max-w-full break-all border-b-2 border-black px-1 text-xs hover:bg-yellow-300 dark:border-zinc-100 dark:hover:text-black"
-              >
-                github.com/KabirKhanuja/Tubestack
-              </a>
-            </p>
+          <div className="flex max-h-[70dvh] flex-col gap-4 overflow-y-auto px-4 py-4">
+            <div className="flex flex-col gap-3 text-center text-sm font-bold uppercase tracking-tight">
+              <p>made by (for) kabir khanuja lol</p>
+              <p className="flex flex-col items-center gap-1.5">
+                <span className="text-xs opacity-70">to contribute</span>
+                <a
+                  href="https://github.com/KabirKhanuja/Tubestack"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block max-w-full break-all border-b-2 border-black px-1 text-xs hover:bg-yellow-300 dark:border-zinc-100 dark:hover:text-black"
+                >
+                  github.com/KabirKhanuja/Tubestack
+                </a>
+              </p>
+            </div>
+
+            <div className="border-t-2 border-black dark:border-zinc-100" />
+
+            <Section title={<>What is <Brand />?</>}>
+              <p>
+                A distraction free space to watch and manage your YouTube
+                videos cause we don't recommend, we arrange. It's just you and your pretty list.
+              </p>
+            </Section>
+
+            <Section title="How to use">
+              <p>
+                Paste any YouTube URL in the top bar and press Enter. Pick a
+                folder. Done.
+              </p>
+            </Section>
+
+            <Section title="Features">
+              <ul className="flex flex-col gap-1.5">
+                {FEATURES.map(([name, desc]) => (
+                  <li key={name}>
+                    <span className="font-bold uppercase tracking-tight">
+                      {name}
+                    </span>{" "}
+                    : {withBrand(desc)}
+                  </li>
+                ))}
+              </ul>
+            </Section>
+
+            <Section title="Storage">
+              <p>
+                Everything is saved in your browser&rsquo;s localStorage. No
+                account, no server, no tracking.
+              </p>
+            </Section>
           </div>
         </DialogContent>
       </Dialog>

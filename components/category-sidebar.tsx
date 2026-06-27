@@ -12,6 +12,7 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useConfirm } from "@/components/confirm-modal";
 import { CategoryRenamePopover } from "@/components/category-rename-popover";
+import { Brand } from "@/components/brand";
 import { useDragReorder } from "@/lib/dnd";
 import { CATEGORY_COLORS, type Category } from "@/lib/types";
 
@@ -122,7 +123,9 @@ export function CategorySidebar({
     <aside className="dotted-bg flex h-full w-full flex-col gap-2 border-r-2 border-black bg-stone-50 p-2 dark:border-zinc-100 dark:bg-zinc-950">
       {/* Brand header */}
       <div className="flex items-center justify-between border-2 border-black bg-yellow-300 px-2 py-2 brutal-shadow dark:border-zinc-100 dark:text-black">
-        <h1 className="text-base font-black tracking-tight uppercase">Tubestack</h1>
+        <h1 className="text-base font-black tracking-tight uppercase">
+          <Brand />
+        </h1>
         <span className="font-mono text-[10px] font-bold">v1</span>
       </div>
 
@@ -346,6 +349,8 @@ export function CategorySidebar({
                 const ok = await confirm({
                   title: "Clear all memory",
                   message: "Clear ALL videos from all categories?",
+                  description:
+                    "This also deletes your custom playlists and will reset back to the default categories :)",
                   confirmText: "Clear All",
                 });
                 if (ok) onClearAll();
