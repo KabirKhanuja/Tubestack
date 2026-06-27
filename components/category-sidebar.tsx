@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import {
   ChevronDown,
   GripVertical,
+  Pencil,
   Plus,
   Trash2,
   X,
 } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useConfirm } from "@/components/confirm-modal";
+import { CategoryRenamePopover } from "@/components/category-rename-popover";
 import { useDragReorder } from "@/lib/dnd";
 import { CATEGORY_COLORS, type Category } from "@/lib/types";
 
@@ -28,6 +30,7 @@ type Props = {
   onSelect: (id: string) => void;
   onAdd: (name: string) => void;
   onRemove: (id: string, moveToCategoryId: string | null) => void;
+  onRename: (id: string, name: string) => void;
   onReorder: (fromId: string, toId: string) => void;
   onClearCategory: (id: string) => void;
   onClearAll: () => void;
@@ -57,6 +60,7 @@ export function CategorySidebar({
   onSelect,
   onAdd,
   onRemove,
+  onRename,
   onReorder,
   onClearCategory,
   onClearAll,
@@ -66,6 +70,9 @@ export function CategorySidebar({
   const [memoryOpen, setMemoryOpen] = useState(false);
   const [pendingDelete, setPendingDelete] = useState<string | null>(null);
   const [videoDropTarget, setVideoDropTarget] = useState<string | null>(null);
+  const [editing, setEditing] = useState<{ id: string; rect: DOMRect } | null>(
+    null
+  );
   const confirm = useConfirm();
 
   const dnd = useDragReorder(onReorder);
@@ -209,15 +216,20 @@ export function CategorySidebar({
                 {c.removable && (
                   <button
                     type="button"
-                    aria-label={`Delete ${c.name}`}
-                    title="Delete"
+                    aria-label={`Edit ${c.name}`}
+                    title="Edit"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleDeleteClick(c.id);
+                      setEditing({
+                        id: c.id,
+                        rect: e.currentTarget.getBoundingClientRect(),
+                      });
                     }}
-                    className="hidden h-full px-1.5 hover:bg-red-500 hover:text-white group-hover:block"
+                    className={`h-full px-1.5 hover:bg-black hover:text-white group-hover:block ${
+                      editing?.id === c.id ? "block" : "hidden"
+                    }`}
                   >
-                    <Trash2 className="h-3.5 w-3.5" />
+                    <Pencil className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
@@ -225,6 +237,22 @@ export function CategorySidebar({
           })}
         </div>
       </ScrollArea>
+
+      {editing &&
+        (() => {
+          const cat = categories.find((c) => c.id === editing.id);
+          if (!cat) return null;
+          return (
+            <CategoryRenamePopover
+              anchor={editing.rect}
+              color={cat.color ?? CATEGORY_COLORS[0]}
+              name={cat.name}
+              onRename={(name) => onRename(cat.id, name)}
+              onDelete={() => handleDeleteClick(cat.id)}
+              onClose={() => setEditing(null)}
+            />
+          );
+        })()}
 
       {/* Pending delete panel */}
       {pendingCategory && (

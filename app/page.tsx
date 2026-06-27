@@ -216,6 +216,27 @@ export default function Home() {
     [setState, categories]
   );
 
+  const renameCategory = useCallback(
+    (id: string, name: string) => {
+      const trimmed = name.trim();
+      if (!trimmed) return;
+      let oldName = "";
+      setState((s) => {
+        const cat = s.categories.find((c) => c.id === id);
+        if (!cat || cat.name === trimmed) return s;
+        oldName = cat.name;
+        return {
+          ...s,
+          categories: s.categories.map((c) =>
+            c.id === id ? { ...c, name: trimmed } : c
+          ),
+        };
+      });
+      if (oldName) toast.success(`Renamed "${oldName}" → "${trimmed}"`);
+    },
+    [setState]
+  );
+
   const reorderCategories = useCallback(
     (fromId: string, toId: string) => {
       setState((s) => ({
@@ -602,6 +623,7 @@ export default function Home() {
           onSelectCategory={selectCategory}
           onAddCategory={addCategory}
           onRemoveCategory={removeCategory}
+          onRenameCategory={renameCategory}
           onClearCategory={clearCategory}
           onClearAll={clearAll}
           onSelectVideo={selectVideo}
@@ -639,6 +661,7 @@ export default function Home() {
           onSelect={selectCategory}
           onAdd={addCategory}
           onRemove={removeCategory}
+          onRename={renameCategory}
           onReorder={reorderCategories}
           onClearCategory={clearCategory}
           onClearAll={clearAll}

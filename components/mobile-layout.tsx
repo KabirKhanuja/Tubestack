@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ExternalLink, Layers, Plus, Trash2, X } from "lucide-react";
+import { ExternalLink, Layers, Pencil, Plus, Trash2 } from "lucide-react";
 import { AddVideoBar } from "@/components/add-video-bar";
 import { YouTubePlayer } from "@/components/youtube-player";
 import { QueuePanel } from "@/components/queue-panel";
@@ -10,9 +10,10 @@ import { InfoButton } from "@/components/info-button";
 import { AddCategoryModal } from "@/components/add-category-modal";
 import { MemoryModal } from "@/components/memory-modal";
 import { useConfirm } from "@/components/confirm-modal";
+import { CategoryRenamePopover } from "@/components/category-rename-popover";
 import { WidgetsBar } from "@/components/widgets/widgets-bar";
 import { canonicalUrl } from "@/lib/youtube";
-import type { Category, Video } from "@/lib/types";
+import { CATEGORY_COLORS, type Category, type Video } from "@/lib/types";
 
 type Props = {
   hydrated: boolean;
@@ -29,6 +30,7 @@ type Props = {
   onSelectCategory: (id: string) => void;
   onAddCategory: (name: string) => void;
   onRemoveCategory: (id: string, moveToCategoryId: string | null) => void;
+  onRenameCategory: (id: string, name: string) => void;
   onClearCategory: (id: string) => void;
   onClearAll: () => void;
   onSelectVideo: (id: string) => void;
@@ -44,7 +46,14 @@ export function MobileLayout(props: Props) {
   const totalCount = Object.values(props.counts).reduce((a, b) => a + b, 0);
   const [addCategoryOpen, setAddCategoryOpen] = useState(false);
   const [memoryOpen, setMemoryOpen] = useState(false);
+  const [editing, setEditing] = useState<{ id: string; rect: DOMRect } | null>(
+    null
+  );
   const confirm = useConfirm();
+
+  const editingCategory = editing
+    ? props.categories.find((c) => c.id === editing.id)
+    : null;
 
   async function handleDeleteCategory(id: string) {
     const cat = props.categories.find((c) => c.id === id);
@@ -145,7 +154,12 @@ export function MobileLayout(props: Props) {
               count={props.counts[c.id] ?? 0}
               active={props.activeCategoryId === c.id}
               onSelect={props.onSelectCategory}
-              onDelete={c.removable ? handleDeleteCategory : undefined}
+              onEdit={
+                c.removable
+                  ? (id, rect) => setEditing({ id, rect })
+                  : undefined
+              }
+              editing={editing?.id === c.id}
               color={c.color}
             />
           ))}
@@ -204,6 +218,17 @@ export function MobileLayout(props: Props) {
         onClearCategory={props.onClearCategory}
         onClearAll={props.onClearAll}
       />
+
+      {editing && editingCategory && (
+        <CategoryRenamePopover
+          anchor={editing.rect}
+          color={editingCategory.color ?? CATEGORY_COLORS[0]}
+          name={editingCategory.name}
+          onRename={(name) => props.onRenameCategory(editingCategory.id, name)}
+          onDelete={() => handleDeleteCategory(editingCategory.id)}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </div>
   );
 }
@@ -215,7 +240,8 @@ function CatTab({
   active,
   color,
   onSelect,
-  onDelete,
+  onEdit,
+  editing,
 }: {
   id: string;
   name: string;
@@ -223,7 +249,8 @@ function CatTab({
   active: boolean;
   color?: string;
   onSelect: (id: string) => void;
-  onDelete?: (id: string) => void;
+  onEdit?: (id: string, rect: DOMRect) => void;
+  editing?: boolean;
 }) {
   return (
     <div
@@ -246,21 +273,23 @@ function CatTab({
         {name}{" "}
         <span className="ml-1 font-mono text-[10px] opacity-70">{count}</span>
       </button>
-      {onDelete && (
+      {onEdit && (
         <button
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onDelete(id);
+            onEdit(id, e.currentTarget.getBoundingClientRect());
           }}
-          aria-label={`Delete ${name}`}
-          className={`flex items-center justify-center border-l-2 px-1.5 transition-colors hover:bg-red-500 hover:text-white ${
+          aria-label={`Edit ${name}`}
+          className={`flex items-center justify-center border-l-2 px-1.5 transition-colors hover:bg-black hover:text-white ${
+            editing ? "bg-black text-white" : ""
+          } ${
             active
               ? "border-l-white/30 dark:border-l-black/30"
               : "border-l-black dark:border-l-zinc-100"
           }`}
         >
-          <X className="h-3 w-3" strokeWidth={3} />
+          <Pencil className="h-3 w-3" strokeWidth={2.5} />
         </button>
       )}
     </div>
