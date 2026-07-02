@@ -6,7 +6,9 @@ import { toast } from "sonner";
 import { CategorySidebar } from "@/components/category-sidebar";
 import { QueuePanel } from "@/components/queue-panel";
 import { AddVideoBar } from "@/components/add-video-bar";
-import { YouTubePlayer } from "@/components/youtube-player";
+import { YouTubePlayer, type YouTubePlayerHandle } from "@/components/youtube-player";
+import { ChaptersPanel } from "@/components/chapters-panel";
+import { HorizontalResizer } from "@/components/horizontal-resizer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Resizer } from "@/components/resizer";
 import { InfoButton } from "@/components/info-button";
@@ -84,12 +86,69 @@ function slug(name: string): string {
   );
 }
 
+/**
+ * Small localStorage-backed state. Starts from `initial` (so SSR/first paint is
+ * stable), then hydrates from storage after mount and persists on change.
+ */
+function usePersistedValue<T>(
+  key: string,
+  initial: T
+): [T, React.Dispatch<React.SetStateAction<T>>] {
+  const [value, setValue] = useState<T>(initial);
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (raw != null) setValue(JSON.parse(raw) as T);
+    } catch {
+      // ignore
+    }
+    hydratedRef.current = true;
+  }, [key]);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // ignore
+    }
+  }, [key, value]);
+
+  return [value, setValue];
+}
+
 export default function Home() {
   const [state, setState, hydrated, resetState] = usePersistentState<TubestackState>(
     INITIAL_STATE
   );
 
   const lastSaveRef = useRef<Record<string, number>>({});
+  const playerRef = useRef<YouTubePlayerHandle>(null);
+  const rightPanelRef = useRef<HTMLDivElement>(null);
+
+  // Chapters panel: below the video (center) by default, movable to the sidebar.
+  const [chaptersInSidebar, setChaptersInSidebar] = usePersistedValue(
+    "tubestack:chaptersInSidebar:v1",
+    false
+  );
+  // Fraction of the right panel height given to chapters when in the sidebar.
+  const [sidebarSplit, setSidebarSplit] = usePersistedValue(
+    "tubestack:sidebarSplit:v1",
+    0.4
+  );
+
+  const handleSplitDrag = useCallback(
+    (clientY: number) => {
+      const el = rightPanelRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.height === 0) return;
+      setSidebarSplit(clamp((clientY - rect.top) / rect.height, 0.15, 0.85));
+    },
+    [setSidebarSplit]
+  );
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerLoading, setPickerLoading] = useState(false);
@@ -687,6 +746,7 @@ export default function Home() {
 
         <div className="flex flex-1 flex-col items-stretch justify-start gap-2 overflow-hidden">
           <YouTubePlayer
+            ref={playerRef}
             videoId={hydrated && activeVideo ? activeVideo.videoId : null}
             startSeconds={activeVideo?.watchedSeconds ?? 0}
             onProgress={handleProgress}
@@ -694,27 +754,43 @@ export default function Home() {
           />
 
           {activeVideo && (
-            <div className="mx-2 flex items-start justify-between gap-2 border-2 border-black bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
-              <div className="min-w-0 flex-1">
-                <h2 className="text-sm font-black leading-tight uppercase">
-                  {activeVideo.title}
-                </h2>
-                {activeVideo.author && (
-                  <p className="mt-0.5 font-mono text-xs uppercase opacity-60">
-                    {activeVideo.author}
-                  </p>
-                )}
+            <>
+              <div className="mx-2 flex items-start justify-between gap-2 border-2 border-black bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-black leading-tight uppercase">
+                    {activeVideo.title}
+                  </h2>
+                  {activeVideo.author && (
+                    <p className="mt-0.5 font-mono text-xs uppercase opacity-60">
+                      {activeVideo.author}
+                    </p>
+                  )}
+                </div>
+                <a
+                  href={canonicalUrl(activeVideo.videoId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 border-2 border-black px-2 py-1 text-xs font-bold uppercase transition-colors hover:bg-red-500 hover:text-white dark:border-zinc-100 dark:hover:border-red-500"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  YouTube
+                </a>
               </div>
-              <a
-                href={canonicalUrl(activeVideo.videoId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 border-2 border-black px-2 py-1 text-xs font-bold uppercase transition-colors hover:bg-red-500 hover:text-white dark:border-zinc-100 dark:hover:border-red-500"
-              >
-                <ExternalLink className="h-3 w-3" />
-                YouTube
-              </a>
-            </div>
+
+              {!chaptersInSidebar && (
+                <div className="mx-2 shrink-0">
+                  <ChaptersPanel
+                    key={activeVideo.videoId}
+                    videoId={activeVideo.videoId}
+                    onSeek={(s) => playerRef.current?.seekTo(s)}
+                    getCurrentTime={() => playerRef.current?.getCurrentTime() ?? null}
+                    getPlayerState={() => playerRef.current?.getPlayerState() ?? null}
+                    variant="center"
+                    onMove={() => setChaptersInSidebar(true)}
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
 
@@ -727,25 +803,65 @@ export default function Home() {
         ariaLabel="Resize queue"
       />
 
-      {/* Right: Queue — resizable */}
+      {/* Right panel — Queue, optionally split with Chapters on top */}
       <div
-        className="hidden shrink-0 lg:block"
+        ref={rightPanelRef}
+        className="hidden shrink-0 lg:flex lg:flex-col"
         style={{ width: queueWidth }}
       >
-        <QueuePanel
-          videos={filteredVideos}
-          activeVideoId={activeVideoId}
-          emptyMessage={
-            videos.length === 0
-              ? "No videos yet."
-              : `No videos in ${activeCategoryName}.`
-          }
-          onSelect={selectVideo}
-          onComplete={completeVideo}
-          onRemove={removeVideo}
-          onReset={resetVideo}
-          onReorder={reorderVideos}
-        />
+        {chaptersInSidebar && activeVideo ? (
+          <>
+            <div
+              className="min-h-0 shrink-0 overflow-hidden"
+              style={{ height: `${sidebarSplit * 100}%` }}
+            >
+              <ChaptersPanel
+                key={activeVideo.videoId}
+                videoId={activeVideo.videoId}
+                onSeek={(s) => playerRef.current?.seekTo(s)}
+                getCurrentTime={() => playerRef.current?.getCurrentTime() ?? null}
+                getPlayerState={() => playerRef.current?.getPlayerState() ?? null}
+                variant="sidebar"
+                onMove={() => setChaptersInSidebar(false)}
+              />
+            </div>
+            <HorizontalResizer
+              onDrag={handleSplitDrag}
+              ariaLabel="Resize chapters / queue"
+            />
+            <div className="min-h-0 flex-1">
+              <QueuePanel
+                videos={filteredVideos}
+                activeVideoId={activeVideoId}
+                emptyMessage={
+                  videos.length === 0
+                    ? "No videos yet."
+                    : `No videos in ${activeCategoryName}.`
+                }
+                onSelect={selectVideo}
+                onComplete={completeVideo}
+                onRemove={removeVideo}
+                onReset={resetVideo}
+                onReorder={reorderVideos}
+              />
+            </div>
+          </>
+        ) : (
+          <QueuePanel
+            videos={filteredVideos}
+            activeVideoId={activeVideoId}
+            emptyMessage={
+              videos.length === 0
+                ? "No videos yet."
+                : `No videos in ${activeCategoryName}.`
+            }
+            onSelect={selectVideo}
+            onComplete={completeVideo}
+            onRemove={removeVideo}
+            onReset={resetVideo}
+            onReorder={reorderVideos}
+          />
+        )}
       </div>
 
       <CategoryPickerModal

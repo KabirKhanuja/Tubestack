@@ -1,9 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { ExternalLink, Layers, Pencil, Plus, Trash2 } from "lucide-react";
 import { AddVideoBar } from "@/components/add-video-bar";
-import { YouTubePlayer } from "@/components/youtube-player";
+import {
+  YouTubePlayer,
+  type YouTubePlayerHandle,
+} from "@/components/youtube-player";
+import { ChaptersPanel } from "@/components/chapters-panel";
 import { QueuePanel } from "@/components/queue-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { InfoButton } from "@/components/info-button";
@@ -54,6 +58,7 @@ export function MobileLayout(props: Props) {
   const editingCategory = editing
     ? props.categories.find((c) => c.id === editing.id)
     : null;
+  const playerRef = useRef<YouTubePlayerHandle>(null);
 
   async function handleDeleteCategory(id: string) {
     const cat = props.categories.find((c) => c.id === id);
@@ -97,6 +102,7 @@ export function MobileLayout(props: Props) {
       {/* Player */}
       <div className="shrink-0">
         <YouTubePlayer
+          ref={playerRef}
           videoId={
             props.hydrated && props.activeVideo
               ? props.activeVideo.videoId
@@ -130,6 +136,19 @@ export function MobileLayout(props: Props) {
             <ExternalLink className="h-3 w-3" />
             YouTube
           </a>
+        </div>
+      )}
+
+      {/* Manual chapters / timestamps */}
+      {props.activeVideo && (
+        <div className="shrink-0 border-b-2 border-black bg-stone-50 p-2 dark:border-zinc-100 dark:bg-zinc-950">
+          <ChaptersPanel
+            key={props.activeVideo.videoId}
+            videoId={props.activeVideo.videoId}
+            onSeek={(s) => playerRef.current?.seekTo(s)}
+            getCurrentTime={() => playerRef.current?.getCurrentTime() ?? null}
+            getPlayerState={() => playerRef.current?.getPlayerState() ?? null}
+          />
         </div>
       )}
 
