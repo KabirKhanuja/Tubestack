@@ -8,6 +8,7 @@ import { QueuePanel } from "@/components/queue-panel";
 import { AddVideoBar } from "@/components/add-video-bar";
 import { YouTubePlayer, type YouTubePlayerHandle } from "@/components/youtube-player";
 import { ChaptersPanel } from "@/components/chapters-panel";
+import { HorizontalResizer } from "@/components/horizontal-resizer";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Resizer } from "@/components/resizer";
 import { InfoButton } from "@/components/info-button";
@@ -85,6 +86,39 @@ function slug(name: string): string {
   );
 }
 
+/**
+ * Small localStorage-backed state. Starts from `initial` (so SSR/first paint is
+ * stable), then hydrates from storage after mount and persists on change.
+ */
+function usePersistedValue<T>(
+  key: string,
+  initial: T
+): [T, React.Dispatch<React.SetStateAction<T>>] {
+  const [value, setValue] = useState<T>(initial);
+  const hydratedRef = useRef(false);
+
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(key);
+      if (raw != null) setValue(JSON.parse(raw) as T);
+    } catch {
+      // ignore
+    }
+    hydratedRef.current = true;
+  }, [key]);
+
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      // ignore
+    }
+  }, [key, value]);
+
+  return [value, setValue];
+}
+
 export default function Home() {
   const [state, setState, hydrated, resetState] = usePersistentState<TubestackState>(
     INITIAL_STATE
@@ -92,6 +126,29 @@ export default function Home() {
 
   const lastSaveRef = useRef<Record<string, number>>({});
   const playerRef = useRef<YouTubePlayerHandle>(null);
+  const rightPanelRef = useRef<HTMLDivElement>(null);
+
+  // Chapters panel: below the video (center) by default, movable to the sidebar.
+  const [chaptersInSidebar, setChaptersInSidebar] = usePersistedValue(
+    "tubestack:chaptersInSidebar:v1",
+    false
+  );
+  // Fraction of the right panel height given to chapters when in the sidebar.
+  const [sidebarSplit, setSidebarSplit] = usePersistedValue(
+    "tubestack:sidebarSplit:v1",
+    0.4
+  );
+
+  const handleSplitDrag = useCallback(
+    (clientY: number) => {
+      const el = rightPanelRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.height === 0) return;
+      setSidebarSplit(clamp((clientY - rect.top) / rect.height, 0.15, 0.85));
+    },
+    [setSidebarSplit]
+  );
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerLoading, setPickerLoading] = useState(false);
@@ -720,13 +777,17 @@ export default function Home() {
                 </a>
               </div>
 
-              <div className="mx-2 shrink-0">
-                <ChaptersPanel
-                  key={activeVideo.videoId}
-                  videoId={activeVideo.videoId}
-                  onSeek={(s) => playerRef.current?.seekTo(s)}
-                />
-              </div>
+              {!chaptersInSidebar && (
+                <div className="mx-2 shrink-0">
+                  <ChaptersPanel
+                    key={activeVideo.videoId}
+                    videoId={activeVideo.videoId}
+                    onSeek={(s) => playerRef.current?.seekTo(s)}
+                    variant="center"
+                    onMove={() => setChaptersInSidebar(true)}
+                  />
+                </div>
+              )}
             </>
           )}
         </div>
@@ -740,25 +801,63 @@ export default function Home() {
         ariaLabel="Resize queue"
       />
 
-      {/* Right: Queue — resizable */}
+      {/* Right panel — Queue, optionally split with Chapters on top */}
       <div
-        className="hidden shrink-0 lg:block"
+        ref={rightPanelRef}
+        className="hidden shrink-0 lg:flex lg:flex-col"
         style={{ width: queueWidth }}
       >
-        <QueuePanel
-          videos={filteredVideos}
-          activeVideoId={activeVideoId}
-          emptyMessage={
-            videos.length === 0
-              ? "No videos yet."
-              : `No videos in ${activeCategoryName}.`
-          }
-          onSelect={selectVideo}
-          onComplete={completeVideo}
-          onRemove={removeVideo}
-          onReset={resetVideo}
-          onReorder={reorderVideos}
-        />
+        {chaptersInSidebar && activeVideo ? (
+          <>
+            <div
+              className="min-h-0 shrink-0 overflow-hidden"
+              style={{ height: `${sidebarSplit * 100}%` }}
+            >
+              <ChaptersPanel
+                key={activeVideo.videoId}
+                videoId={activeVideo.videoId}
+                onSeek={(s) => playerRef.current?.seekTo(s)}
+                variant="sidebar"
+                onMove={() => setChaptersInSidebar(false)}
+              />
+            </div>
+            <HorizontalResizer
+              onDrag={handleSplitDrag}
+              ariaLabel="Resize chapters / queue"
+            />
+            <div className="min-h-0 flex-1">
+              <QueuePanel
+                videos={filteredVideos}
+                activeVideoId={activeVideoId}
+                emptyMessage={
+                  videos.length === 0
+                    ? "No videos yet."
+                    : `No videos in ${activeCategoryName}.`
+                }
+                onSelect={selectVideo}
+                onComplete={completeVideo}
+                onRemove={removeVideo}
+                onReset={resetVideo}
+                onReorder={reorderVideos}
+              />
+            </div>
+          </>
+        ) : (
+          <QueuePanel
+            videos={filteredVideos}
+            activeVideoId={activeVideoId}
+            emptyMessage={
+              videos.length === 0
+                ? "No videos yet."
+                : `No videos in ${activeCategoryName}.`
+            }
+            onSelect={selectVideo}
+            onComplete={completeVideo}
+            onRemove={removeVideo}
+            onReset={resetVideo}
+            onReorder={reorderVideos}
+          />
+        )}
       </div>
 
       <CategoryPickerModal

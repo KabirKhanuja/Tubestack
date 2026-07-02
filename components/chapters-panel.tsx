@@ -1,11 +1,16 @@
 "use client";
 
 import { useState } from "react";
+import { PanelRight, Undo2 } from "lucide-react";
 import { formatDuration } from "@/lib/youtube";
 
 type Props = {
   videoId: string;
   onSeek: (seconds: number) => void;
+  /** "center" = collapsible box below the video; "sidebar" = full-height panel. */
+  variant?: "center" | "sidebar";
+  /** When provided (desktop only), shows a button to move the panel. */
+  onMove?: () => void;
 };
 
 type Chapter = { seconds: number; label: string };
@@ -75,13 +80,19 @@ function parseChapters(text: string): Chapter[] {
   return out;
 }
 
-export function ChaptersPanel({ videoId, onSeek }: Props) {
+export function ChaptersPanel({
+  videoId,
+  onSeek,
+  variant = "center",
+  onMove,
+}: Props) {
   const initial = loadForVideo(videoId);
   const [open, setOpen] = useState(false);
   const [chapters, setChapters] = useState<Chapter[]>(initial?.chapters ?? []);
   const [raw, setRaw] = useState(initial?.raw ?? "");
   const [editing, setEditing] = useState((initial?.chapters.length ?? 0) === 0);
   const [notice, setNotice] = useState<string | null>(null);
+  const sidebar = variant === "sidebar";
 
   function handleSave() {
     const parsed = parseChapters(raw);
@@ -95,79 +106,144 @@ export function ChaptersPanel({ videoId, onSeek }: Props) {
     setEditing(false);
   }
 
-  return (
-    <div className="border-2 border-black bg-white dark:border-zinc-100 dark:bg-zinc-900">
+  const moveButton = onMove ? (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation();
+        onMove();
+      }}
+      title={sidebar ? "Move back below video" : "Move to sidebar"}
+      aria-label={sidebar ? "Move chapters back below video" : "Move chapters to sidebar"}
+      className="grid h-6 w-6 shrink-0 place-items-center border-2 border-black bg-white text-black hover:bg-yellow-300 active:translate-x-px active:translate-y-px dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-yellow-300 dark:hover:text-black"
+    >
+      {sidebar ? (
+        <Undo2 className="h-3.5 w-3.5" strokeWidth={3} />
+      ) : (
+        <PanelRight className="h-3.5 w-3.5" strokeWidth={3} />
+      )}
+    </button>
+  ) : null;
+
+  const editor = (
+    <div className="flex flex-col gap-2">
+      {sidebar && chapters.length === 0 && (
+        <p className="font-mono text-[10px] uppercase opacity-60">
+          No chapters yet. Paste timestamps below.
+        </p>
+      )}
+      <textarea
+        value={raw}
+        onChange={(e) => setRaw(e.target.value)}
+        rows={5}
+        placeholder={"Paste timestamps, one per line:\n0:00 Intro\n1:23 - Setup\n[1:03:08](url) Deep dive"}
+        className="w-full resize-y border-2 border-black bg-white px-2 py-1.5 font-mono text-xs text-black placeholder:text-black/40 focus:outline-none dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-100/40"
+      />
+      {notice && (
+        <p className="font-mono text-[10px] uppercase text-red-600">{notice}</p>
+      )}
       <button
         type="button"
-        onClick={() => setOpen((v) => !v)}
-        aria-expanded={open}
-        className="flex w-full items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase tracking-tight hover:bg-yellow-300 dark:hover:bg-yellow-300 dark:hover:text-black"
+        onClick={handleSave}
+        className="self-start border-2 border-black bg-black px-3 py-1.5 text-xs font-black uppercase tracking-tight text-white brutal-shadow-sm hover:bg-zinc-800 active:translate-x-px active:translate-y-px active:shadow-none dark:border-zinc-100 dark:bg-zinc-100 dark:text-black"
       >
-        <span aria-hidden>{open ? "▲" : "▼"}</span>
-        <span>Chapters</span>
-        {chapters.length > 0 && (
-          <span className="ml-auto font-mono text-[10px] opacity-60">
-            {chapters.length}
-          </span>
-        )}
+        Save
       </button>
+    </div>
+  );
+
+  const list = (
+    <div className="flex flex-col gap-2">
+      <ul
+        className={`flex flex-col gap-1 ${
+          sidebar ? "" : "max-h-[250px] overflow-y-auto"
+        }`}
+      >
+        {chapters.map((c, i) => (
+          <li key={i} className="flex items-start gap-2">
+            <button
+              type="button"
+              onClick={() => onSeek(c.seconds)}
+              className="shrink-0 border-2 border-black bg-yellow-300 px-1.5 py-0.5 font-mono text-[11px] font-black text-black hover:bg-yellow-400 active:translate-x-px active:translate-y-px dark:border-black"
+            >
+              {formatDuration(c.seconds)}
+            </button>
+            {c.label && (
+              <span className="pt-0.5 text-xs font-bold leading-snug">
+                {c.label}
+              </span>
+            )}
+          </li>
+        ))}
+      </ul>
+      <button
+        type="button"
+        onClick={() => {
+          setNotice(null);
+          setEditing(true);
+        }}
+        className="self-start border-2 border-black bg-white px-3 py-1.5 text-xs font-black uppercase tracking-tight text-black hover:bg-stone-200 active:translate-x-px active:translate-y-px dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800"
+      >
+        Edit
+      </button>
+    </div>
+  );
+
+  // Sidebar variant: full-height panel matching the QUEUE panel styling.
+  if (sidebar) {
+    return (
+      <div
+        className="dotted-bg flex h-full w-full flex-col border-l-2 border-black bg-stone-50 dark:border-zinc-100 dark:bg-zinc-950"
+        style={{ animation: "widget-slide-up 0.18s ease-out" }}
+      >
+        <div className="flex shrink-0 items-center justify-between gap-2 border-b-2 border-black bg-yellow-300 px-3 py-2 brutal-shadow dark:border-zinc-100 dark:text-black">
+          <div className="flex items-center gap-2">
+            <h2 className="text-sm font-black uppercase tracking-tight">
+              Chapters
+            </h2>
+            {chapters.length > 0 && (
+              <span className="font-mono text-xs font-bold opacity-70">
+                {chapters.length.toString().padStart(2, "0")}
+              </span>
+            )}
+          </div>
+          {moveButton}
+        </div>
+        <div className="min-h-0 flex-1 overflow-y-auto p-2">
+          {editing ? editor : list}
+        </div>
+      </div>
+    );
+  }
+
+  // Center variant: collapsible box below the video (unchanged behavior).
+  return (
+    <div className="border-2 border-black bg-white dark:border-zinc-100 dark:bg-zinc-900">
+      <div
+        className={`flex w-full items-center gap-1.5 ${onMove ? "pr-1.5" : ""}`}
+      >
+        <button
+          type="button"
+          onClick={() => setOpen((v) => !v)}
+          aria-expanded={open}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-black uppercase tracking-tight hover:bg-yellow-300 dark:hover:bg-yellow-300 dark:hover:text-black ${
+            onMove ? "flex-1" : "w-full"
+          }`}
+        >
+          <span aria-hidden>{open ? "▲" : "▼"}</span>
+          <span>Chapters</span>
+          {chapters.length > 0 && (
+            <span className="ml-auto font-mono text-[10px] opacity-60">
+              {chapters.length}
+            </span>
+          )}
+        </button>
+        {moveButton}
+      </div>
 
       {open && (
         <div className="border-t-2 border-black p-2 dark:border-zinc-100">
-          {editing ? (
-            <div className="flex flex-col gap-2">
-              <textarea
-                value={raw}
-                onChange={(e) => setRaw(e.target.value)}
-                rows={5}
-                placeholder={"Paste timestamps, one per line:\n0:00 Intro\n1:23 - Setup\n[1:03:08](url) Deep dive"}
-                className="w-full resize-y border-2 border-black bg-white px-2 py-1.5 font-mono text-xs text-black placeholder:text-black/40 focus:outline-none dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:placeholder:text-zinc-100/40"
-              />
-              {notice && (
-                <p className="font-mono text-[10px] uppercase text-red-600">
-                  {notice}
-                </p>
-              )}
-              <button
-                type="button"
-                onClick={handleSave}
-                className="self-start border-2 border-black bg-black px-3 py-1.5 text-xs font-black uppercase tracking-tight text-white brutal-shadow-sm hover:bg-zinc-800 active:translate-x-px active:translate-y-px active:shadow-none dark:border-zinc-100 dark:bg-zinc-100 dark:text-black"
-              >
-                Save
-              </button>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-2">
-              <ul className="flex max-h-[250px] flex-col gap-1 overflow-y-auto">
-                {chapters.map((c, i) => (
-                  <li key={i} className="flex items-start gap-2">
-                    <button
-                      type="button"
-                      onClick={() => onSeek(c.seconds)}
-                      className="shrink-0 border-2 border-black bg-yellow-300 px-1.5 py-0.5 font-mono text-[11px] font-black text-black hover:bg-yellow-400 active:translate-x-px active:translate-y-px dark:border-black"
-                    >
-                      {formatDuration(c.seconds)}
-                    </button>
-                    {c.label && (
-                      <span className="pt-0.5 text-xs font-bold leading-snug">
-                        {c.label}
-                      </span>
-                    )}
-                  </li>
-                ))}
-              </ul>
-              <button
-                type="button"
-                onClick={() => {
-                  setNotice(null);
-                  setEditing(true);
-                }}
-                className="self-start border-2 border-black bg-white px-3 py-1.5 text-xs font-black uppercase tracking-tight text-black hover:bg-stone-200 active:translate-x-px active:translate-y-px dark:border-zinc-100 dark:bg-zinc-950 dark:text-zinc-100 dark:hover:bg-zinc-800"
-              >
-                Edit
-              </button>
-            </div>
-          )}
+          {editing ? editor : list}
         </div>
       )}
     </div>
