@@ -1,6 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 declare global {
   interface Window {
@@ -81,12 +88,18 @@ export type YouTubePlayerProps = {
   onEnded?: () => void;
 };
 
-export function YouTubePlayer({
-  videoId,
-  startSeconds = 0,
-  onProgress,
-  onEnded,
-}: YouTubePlayerProps) {
+export type YouTubePlayerHandle = {
+  /** Seek the active player to an absolute time (seconds) and resume playback. */
+  seekTo: (seconds: number) => void;
+};
+
+export const YouTubePlayer = forwardRef<
+  YouTubePlayerHandle,
+  YouTubePlayerProps
+>(function YouTubePlayer(
+  { videoId, startSeconds = 0, onProgress, onEnded },
+  ref
+) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const playerRef = useRef<YTPlayer | null>(null);
   const readyRef = useRef(false);
@@ -101,6 +114,23 @@ export function YouTubePlayer({
   const isEmbedBlocked = useMemo(
     () => playerErrorCode === 101 || playerErrorCode === 150,
     [playerErrorCode]
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      seekTo: (seconds: number) => {
+        const p = playerRef.current;
+        if (!p) return;
+        try {
+          p.seekTo(Math.max(0, seconds), true);
+          p.playVideo();
+        } catch {
+          // ignore
+        }
+      },
+    }),
+    []
   );
 
   useEffect(() => {
@@ -287,4 +317,4 @@ export function YouTubePlayer({
       </div>
     </div>
   );
-}
+});

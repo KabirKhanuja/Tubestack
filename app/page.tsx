@@ -6,7 +6,8 @@ import { toast } from "sonner";
 import { CategorySidebar } from "@/components/category-sidebar";
 import { QueuePanel } from "@/components/queue-panel";
 import { AddVideoBar } from "@/components/add-video-bar";
-import { YouTubePlayer } from "@/components/youtube-player";
+import { YouTubePlayer, type YouTubePlayerHandle } from "@/components/youtube-player";
+import { ChaptersPanel } from "@/components/chapters-panel";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Resizer } from "@/components/resizer";
 import { InfoButton } from "@/components/info-button";
@@ -90,6 +91,7 @@ export default function Home() {
   );
 
   const lastSaveRef = useRef<Record<string, number>>({});
+  const playerRef = useRef<YouTubePlayerHandle>(null);
 
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickerLoading, setPickerLoading] = useState(false);
@@ -687,6 +689,7 @@ export default function Home() {
 
         <div className="flex flex-1 flex-col items-stretch justify-start gap-2 overflow-hidden">
           <YouTubePlayer
+            ref={playerRef}
             videoId={hydrated && activeVideo ? activeVideo.videoId : null}
             startSeconds={activeVideo?.watchedSeconds ?? 0}
             onProgress={handleProgress}
@@ -694,27 +697,37 @@ export default function Home() {
           />
 
           {activeVideo && (
-            <div className="mx-2 flex items-start justify-between gap-2 border-2 border-black bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
-              <div className="min-w-0 flex-1">
-                <h2 className="text-sm font-black leading-tight uppercase">
-                  {activeVideo.title}
-                </h2>
-                {activeVideo.author && (
-                  <p className="mt-0.5 font-mono text-xs uppercase opacity-60">
-                    {activeVideo.author}
-                  </p>
-                )}
+            <>
+              <div className="mx-2 flex items-start justify-between gap-2 border-2 border-black bg-white p-2 dark:border-zinc-100 dark:bg-zinc-900">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-black leading-tight uppercase">
+                    {activeVideo.title}
+                  </h2>
+                  {activeVideo.author && (
+                    <p className="mt-0.5 font-mono text-xs uppercase opacity-60">
+                      {activeVideo.author}
+                    </p>
+                  )}
+                </div>
+                <a
+                  href={canonicalUrl(activeVideo.videoId)}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex shrink-0 items-center gap-1 border-2 border-black px-2 py-1 text-xs font-bold uppercase transition-colors hover:bg-red-500 hover:text-white dark:border-zinc-100 dark:hover:border-red-500"
+                >
+                  <ExternalLink className="h-3 w-3" />
+                  YouTube
+                </a>
               </div>
-              <a
-                href={canonicalUrl(activeVideo.videoId)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 border-2 border-black px-2 py-1 text-xs font-bold uppercase transition-colors hover:bg-red-500 hover:text-white dark:border-zinc-100 dark:hover:border-red-500"
-              >
-                <ExternalLink className="h-3 w-3" />
-                YouTube
-              </a>
-            </div>
+
+              <div className="mx-2 shrink-0">
+                <ChaptersPanel
+                  key={activeVideo.videoId}
+                  videoId={activeVideo.videoId}
+                  onSeek={(s) => playerRef.current?.seekTo(s)}
+                />
+              </div>
+            </>
           )}
         </div>
 
