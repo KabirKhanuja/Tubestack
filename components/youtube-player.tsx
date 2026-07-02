@@ -91,6 +91,10 @@ export type YouTubePlayerProps = {
 export type YouTubePlayerHandle = {
   /** Seek the active player to an absolute time (seconds) and resume playback. */
   seekTo: (seconds: number) => void;
+  /** Current playback position in seconds, or null if unavailable. */
+  getCurrentTime: () => number | null;
+  /** YouTube player state (1 = playing), or null if unavailable. */
+  getPlayerState: () => number | null;
 };
 
 export const YouTubePlayer = forwardRef<
@@ -127,6 +131,20 @@ export const YouTubePlayer = forwardRef<
           p.playVideo();
         } catch {
           // ignore
+        }
+      },
+      getCurrentTime: () => {
+        try {
+          return playerRef.current?.getCurrentTime() ?? null;
+        } catch {
+          return null;
+        }
+      },
+      getPlayerState: () => {
+        try {
+          return playerRef.current?.getPlayerState() ?? null;
+        } catch {
+          return null;
         }
       },
     }),

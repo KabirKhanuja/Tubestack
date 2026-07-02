@@ -146,6 +146,8 @@ export function MobileLayout(props: Props) {
             key={props.activeVideo.videoId}
             videoId={props.activeVideo.videoId}
             onSeek={(s) => playerRef.current?.seekTo(s)}
+            getCurrentTime={() => playerRef.current?.getCurrentTime() ?? null}
+            getPlayerState={() => playerRef.current?.getPlayerState() ?? null}
           />
         </div>
       )}

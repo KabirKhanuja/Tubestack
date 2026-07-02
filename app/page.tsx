@@ -783,6 +783,8 @@ export default function Home() {
                     key={activeVideo.videoId}
                     videoId={activeVideo.videoId}
                     onSeek={(s) => playerRef.current?.seekTo(s)}
+                    getCurrentTime={() => playerRef.current?.getCurrentTime() ?? null}
+                    getPlayerState={() => playerRef.current?.getPlayerState() ?? null}
                     variant="center"
                     onMove={() => setChaptersInSidebar(true)}
                   />
@@ -817,6 +819,8 @@ export default function Home() {
                 key={activeVideo.videoId}
                 videoId={activeVideo.videoId}
                 onSeek={(s) => playerRef.current?.seekTo(s)}
+                getCurrentTime={() => playerRef.current?.getCurrentTime() ?? null}
+                getPlayerState={() => playerRef.current?.getPlayerState() ?? null}
                 variant="sidebar"
                 onMove={() => setChaptersInSidebar(false)}
               />

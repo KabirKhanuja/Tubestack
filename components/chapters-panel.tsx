@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PanelRight, Undo2 } from "lucide-react";
 import { formatDuration } from "@/lib/youtube";
 
@@ -11,7 +11,27 @@ type Props = {
   variant?: "center" | "sidebar";
   /** When provided (desktop only), shows a button to move the panel. */
   onMove?: () => void;
+  /** Current playback position in seconds — used to highlight the active chapter. */
+  getCurrentTime?: () => number | null;
+  /** YouTube player state (1 = playing) — polling pauses while not playing. */
+  getPlayerState?: () => number | null;
 };
+
+const YT_PLAYING = 1;
+
+/** Index of the chapter whose start is the latest one at/behind the given time. */
+function activeChapterIndex(chapters: Chapter[], time: number): number {
+  let active = -1;
+  let best = -Infinity;
+  for (let i = 0; i < chapters.length; i++) {
+    const s = chapters[i].seconds;
+    if (s <= time && s >= best) {
+      best = s;
+      active = i;
+    }
+  }
+  return active;
+}
 
 type Chapter = { seconds: number; label: string };
 
@@ -85,6 +105,8 @@ export function ChaptersPanel({
   onSeek,
   variant = "center",
   onMove,
+  getCurrentTime,
+  getPlayerState,
 }: Props) {
   const initial = loadForVideo(videoId);
   const [open, setOpen] = useState(false);
@@ -92,7 +114,34 @@ export function ChaptersPanel({
   const [raw, setRaw] = useState(initial?.raw ?? "");
   const [editing, setEditing] = useState((initial?.chapters.length ?? 0) === 0);
   const [notice, setNotice] = useState<string | null>(null);
+  const [activeIndex, setActiveIndex] = useState(-1);
   const sidebar = variant === "sidebar";
+
+  // Keep the latest accessors in refs so the polling effect doesn't restart
+  // every render (parents pass fresh inline closures).
+  const getCurrentTimeRef = useRef(getCurrentTime);
+  const getPlayerStateRef = useRef(getPlayerState);
+  getCurrentTimeRef.current = getCurrentTime;
+  getPlayerStateRef.current = getPlayerState;
+
+  // Poll playback time once a second to highlight the active chapter. The
+  // interval is torn down on unmount (video deselected) and when there are no
+  // chapters; ticks are skipped while the player isn't playing.
+  useEffect(() => {
+    if (chapters.length === 0) {
+      setActiveIndex(-1);
+      return;
+    }
+    const id = setInterval(() => {
+      const state = getPlayerStateRef.current?.();
+      if (state != null && state !== YT_PLAYING) return;
+      const t = getCurrentTimeRef.current?.();
+      if (typeof t !== "number") return;
+      const next = activeChapterIndex(chapters, t);
+      setActiveIndex((prev) => (prev === next ? prev : next));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [chapters]);
 
   function handleSave() {
     const parsed = parseChapters(raw);
@@ -164,7 +213,11 @@ export function ChaptersPanel({
             <button
               type="button"
               onClick={() => onSeek(c.seconds)}
-              className="shrink-0 border-2 border-black bg-yellow-300 px-1.5 py-0.5 font-mono text-[11px] font-black text-black hover:bg-yellow-400 active:translate-x-px active:translate-y-px dark:border-black"
+              className={`shrink-0 border-2 border-black px-1.5 py-0.5 font-mono text-[11px] font-black text-black transition-colors active:translate-x-px active:translate-y-px dark:border-black ${
+                i === activeIndex
+                  ? "bg-yellow-300 hover:bg-yellow-400"
+                  : "bg-orange-400 hover:bg-orange-500"
+              }`}
             >
               {formatDuration(c.seconds)}
             </button>
