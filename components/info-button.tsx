@@ -22,6 +22,10 @@ const FEATURES: [string, string][] = [
   ],
   ["Reset", "circular arrow on any video card resets progress to zero"],
   [
+    "Chapters",
+    "paste timestamps from any YouTube video to jump between sections instantly; move the panel to the sidebar for a cleaner view",
+  ],
+  [
     "Memory",
     "floating button (bottom right) shows exactly how much localStorage Tubestack is using, broken down by folder",
   ],
