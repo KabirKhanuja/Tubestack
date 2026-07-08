@@ -1,20 +1,21 @@
-this is what i had in my mind, but you can check : [tubestack here ](https://tubestack-ten.vercel.app/) 
+# Tubestack
 
-<img width="1017" height="631" alt="image" src="https://github.com/user-attachments/assets/9d1d9663-97bb-4637-809c-5bdc9958e47f" />
+Save YouTube videos, watch them later, without 100 tabs. You know the drill — you open YouTube, see something interesting, middle-click "for later", and suddenly your browser has 47 tabs and no RAM. Tubestack fixes that.
 
-## Features
+Try it: https://tubestack-ten.vercel.app/
 
-- Consolidated YouTube watchlist in one clean workspace
-- Distraction-free player with recommendations minimized
-- Organized by categories like Podcast, Tutorial, Music, and Study
-- Custom categories with drag-and-drop reordering
-- In-browser storage using `localStorage`
-- No sign-in required
-- Lightweight and fast
-- Watch progress saved automatically
-- Real-time progress tracking with resume support
-- Remove completed videos from the queue
-- Built with a neo-brutalist UI style
-- Responsive layout with resizable panels
-- Works entirely in the browser
-- Fallback to open blocked videos on YouTube
+![screenshot](https://github.com/user-attachments/assets/9d1d9663-97bb-4637-809c-5bdc9958e47f)
+
+## What it does
+
+- One clean workspace for all your saved videos, organized into categories (Podcast, Tutorial, Music, Study, or whatever you make up)
+- Distraction-free player — the recommendations sidebar stays out of sight
+- Drag and drop to reorder your queue. Delete when done. Progress saves itself.
+- Everything lives in your browser's localStorage. No accounts, no servers.
+- Built with a neo-brutalist look, because why not
+
+## If something goes wrong
+
+Some videos might be blocked from embedding. Tubestack falls back to opening them on YouTube directly.
+
+Otherwise, open an issue. Ideas and bug reports are welcome.
