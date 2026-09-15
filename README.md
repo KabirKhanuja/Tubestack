@@ -1,3 +1,7 @@
+
+<img width="757" height="418" alt="image" src="https://github.com/user-attachments/assets/dd283a1d-a092-4e55-ade9-8992138b2ce8" />
+
+
 this is what i had in my mind, but you can check : [tubestack here ](https://tubestack-ten.vercel.app/) 
 
 <img width="1017" height="631" alt="image" src="https://github.com/user-attachments/assets/9d1d9663-97bb-4637-809c-5bdc9958e47f" />
