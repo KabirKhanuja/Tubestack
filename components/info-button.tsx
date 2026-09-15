@@ -31,7 +31,11 @@ const FEATURES: [string, string][] = [
   ],
   [
     "Data saver",
-    "feather button in the top bar strips everything down to the player and a plain list, using less memory and data; \"Normal view\" switches back",
+    "feather button (bottom right) strips everything down to the player and a plain list, using less memory and data; \"Normal view\" switches back",
+  ],
+  [
+    "Widgets",
+    "grid button (bottom right) lets you tick which of pomodoro, random joke and to-do show up below the player",
   ],
   ["Pomodoro", "built-in focus timer with sound alert when done"],
   ["To-do", "quick task list that lives alongside your videos"],

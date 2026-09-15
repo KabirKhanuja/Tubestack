@@ -15,8 +15,7 @@ import { AddCategoryModal } from "@/components/add-category-modal";
 import { MemoryModal } from "@/components/memory-modal";
 import { useConfirm } from "@/components/confirm-modal";
 import { CategoryRenamePopover } from "@/components/category-rename-popover";
-import { WidgetsBar } from "@/components/widgets/widgets-bar";
-import { DataSaverButton } from "@/components/data-saver-layout";
+import { WidgetsBar, type WidgetId } from "@/components/widgets/widgets-bar";
 import { canonicalUrl } from "@/lib/youtube";
 import { CATEGORY_COLORS, type Category, type Video } from "@/lib/types";
 
@@ -45,7 +44,7 @@ type Props = {
   onReorderVideos: (fromId: string, toId: string) => void;
   onProgress: (currentSeconds: number, durationSeconds: number) => void;
   onEnded: () => void;
-  onEnterDataSaver: () => void;
+  enabledWidgets: WidgetId[];
 };
 
 export function MobileLayout(props: Props) {
@@ -97,7 +96,6 @@ export function MobileLayout(props: Props) {
             onSubmit={props.onAddUrl}
           />
         </div>
-        <DataSaverButton onClick={props.onEnterDataSaver} />
         <InfoButton />
         <ThemeToggle />
       </div>
@@ -210,10 +208,12 @@ export function MobileLayout(props: Props) {
         />
       </div>
 
-      {/* Widgets bar at bottom of mobile column */}
-      <div className="border-t-2 border-black bg-stone-100 p-2 pb-3 dark:border-zinc-100 dark:bg-zinc-950">
-        <WidgetsBar />
-      </div>
+      {/* Widgets bar at bottom of mobile column (only when some are enabled) */}
+      {props.enabledWidgets.length > 0 && (
+        <div className="border-t-2 border-black bg-stone-100 p-2 pb-3 dark:border-zinc-100 dark:bg-zinc-950">
+          <WidgetsBar enabled={props.enabledWidgets} />
+        </div>
+      )}
 
       {/* Floating Memory FAB (bottom-left) */}
       <button

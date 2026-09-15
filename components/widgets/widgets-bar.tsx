@@ -10,26 +10,52 @@ import {
   usePomodoro,
 } from "@/components/widgets/pomodoro-context";
 
-type WidgetId = "pomodoro" | "joke" | "todo";
+export type WidgetId = "pomodoro" | "joke" | "todo";
 
-const WIDGET_TITLE: Record<WidgetId, string> = {
-  pomodoro: "Pomodoro",
-  joke: "Random joke",
-  todo: "To-do",
-};
+export const WIDGETS: {
+  id: WidgetId;
+  label: string;
+  title: string;
+  icon: React.ReactNode;
+}[] = [
+  {
+    id: "pomodoro",
+    label: "pomodoro",
+    title: "Pomodoro",
+    icon: <Clock className="h-3.5 w-3.5" strokeWidth={3} />,
+  },
+  {
+    id: "joke",
+    label: "random joke",
+    title: "Random joke",
+    icon: <Smile className="h-3.5 w-3.5" strokeWidth={3} />,
+  },
+  {
+    id: "todo",
+    label: "to-do",
+    title: "To-do",
+    icon: <ListChecks className="h-3.5 w-3.5" strokeWidth={3} />,
+  },
+];
 
-export function WidgetsBar() {
+/** Bottom widgets bar — shows only the widgets the user enabled, or nothing. */
+export function WidgetsBar({ enabled }: { enabled: WidgetId[] }) {
   const [active, setActive] = useState<WidgetId | null>(null);
   const pomo = usePomodoro();
+
+  if (enabled.length === 0) return null;
+
+  // An open widget that was just disabled closes with it.
+  const shown = active && enabled.includes(active) ? active : null;
 
   const toggle = (id: WidgetId) =>
     setActive((cur) => (cur === id ? null : id));
 
   return (
     <div className="shrink-0 flex flex-col items-stretch gap-2">
-      {active && (
+      {shown && (
         <div
-          key={active}
+          key={shown}
           className="border-2 border-black bg-stone-50 brutal-shadow-sm dark:border-zinc-100 dark:bg-zinc-900"
           style={{
             animation: "widget-slide-up 0.18s ease-out",
@@ -37,7 +63,7 @@ export function WidgetsBar() {
         >
           <div className="flex items-center justify-between border-b-2 border-black bg-yellow-300 px-3 py-1.5 dark:border-zinc-100 dark:text-black">
             <h3 className="text-xs font-black uppercase tracking-tight">
-              {WIDGET_TITLE[active]}
+              {WIDGETS.find((w) => w.id === shown)?.title}
             </h3>
             <button
               type="button"
@@ -49,39 +75,32 @@ export function WidgetsBar() {
             </button>
           </div>
           <div className="p-3">
-            {active === "pomodoro" && <PomodoroWidget />}
-            {active === "joke" && <JokeWidget />}
-            {active === "todo" && <TodoWidget />}
+            {shown === "pomodoro" && <PomodoroWidget />}
+            {shown === "joke" && <JokeWidget />}
+            {shown === "todo" && <TodoWidget />}
           </div>
         </div>
       )}
 
       <div className="flex flex-wrap items-stretch gap-1.5 border-2 border-black bg-white p-1.5 brutal-shadow-sm dark:border-zinc-100 dark:bg-zinc-900">
-        <NavButton
-          label="pomodoro"
-          icon={<Clock className="h-3.5 w-3.5" strokeWidth={3} />}
-          active={active === "pomodoro"}
-          onClick={() => toggle("pomodoro")}
-          badge={
-            pomo.status === "running"
-              ? formatPomodoroTime(pomo.remaining)
-              : pomo.status === "done"
-              ? "Done!"
-              : undefined
-          }
-        />
-        <NavButton
-          label="random joke"
-          icon={<Smile className="h-3.5 w-3.5" strokeWidth={3} />}
-          active={active === "joke"}
-          onClick={() => toggle("joke")}
-        />
-        <NavButton
-          label="to-do"
-          icon={<ListChecks className="h-3.5 w-3.5" strokeWidth={3} />}
-          active={active === "todo"}
-          onClick={() => toggle("todo")}
-        />
+        {WIDGETS.filter((w) => enabled.includes(w.id)).map((w) => (
+          <NavButton
+            key={w.id}
+            label={w.label}
+            icon={w.icon}
+            active={shown === w.id}
+            onClick={() => toggle(w.id)}
+            badge={
+              w.id !== "pomodoro"
+                ? undefined
+                : pomo.status === "running"
+                ? formatPomodoroTime(pomo.remaining)
+                : pomo.status === "done"
+                ? "Done!"
+                : undefined
+            }
+          />
+        ))}
       </div>
     </div>
   );

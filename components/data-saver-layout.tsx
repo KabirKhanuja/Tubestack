@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Feather } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { FAB_CLASS } from "@/components/fab";
 import { YouTubePlayer } from "@/components/youtube-player";
 import { canonicalUrl } from "@/lib/youtube";
 import type { Category, Video } from "@/lib/types";
@@ -165,16 +165,14 @@ export function DataSaverLayout(props: Props) {
 
 export function DataSaverButton({ onClick }: { onClick: () => void }) {
   return (
-    <Button
+    <button
       type="button"
-      variant="ghost"
-      size="icon"
+      onClick={onClick}
       aria-label="Data saver mode"
       title="Data saver mode"
-      onClick={onClick}
-      className="h-9 w-9 shrink-0"
+      className={FAB_CLASS}
     >
-      <Feather className="h-4 w-4" />
-    </Button>
+      <Feather className="h-5 w-5" strokeWidth={2.5} />
+    </button>
   );
 }

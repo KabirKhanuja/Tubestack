@@ -13,7 +13,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Resizer } from "@/components/resizer";
 import { InfoButton } from "@/components/info-button";
 import { MobileLayout } from "@/components/mobile-layout";
-import { WidgetsBar } from "@/components/widgets/widgets-bar";
+import { WidgetsBar, type WidgetId } from "@/components/widgets/widgets-bar";
+import { WidgetsPickerButton } from "@/components/widgets/widgets-picker-button";
 import { MemoryStatsButton } from "@/components/memory-stats-button";
 import { DataSaverButton, DataSaverLayout } from "@/components/data-saver-layout";
 import {
@@ -144,6 +145,11 @@ export default function Home() {
   const [dataSaver, setDataSaver] = usePersistedValue(
     "tubestack:dataSaver:v1",
     false
+  );
+  // Widgets shown in the bottom bar — none by default, picked from the FAB.
+  const [enabledWidgets, setEnabledWidgets] = usePersistedValue<WidgetId[]>(
+    "tubestack:widgets:v1",
+    []
   );
 
   const handleSplitDrag = useCallback(
@@ -713,6 +719,17 @@ export default function Home() {
     );
   }
 
+  const floatingButtons = (
+    <div className="fixed bottom-4 right-4 z-40 flex items-center gap-3">
+      <DataSaverButton onClick={() => setDataSaver(true)} />
+      <WidgetsPickerButton
+        enabled={enabledWidgets}
+        onChange={setEnabledWidgets}
+      />
+      <MemoryStatsButton />
+    </div>
+  );
+
   if (isMobile) {
     return (
       <>
@@ -745,7 +762,7 @@ export default function Home() {
           onReorderVideos={reorderVideos}
           onProgress={handleProgress}
           onEnded={handleEnded}
-          onEnterDataSaver={() => setDataSaver(true)}
+          enabledWidgets={enabledWidgets}
         />
         <CategoryPickerModal
           open={pickerOpen}
@@ -755,7 +772,7 @@ export default function Home() {
           onPick={handlePickCategory}
           onClose={closePicker}
         />
-        <MemoryStatsButton />
+        {floatingButtons}
       </>
     );
   }
@@ -794,7 +811,6 @@ export default function Home() {
           <div className="min-w-0 flex-1">
             <AddVideoBar loading={pickerLoading} onSubmit={handleAddUrl} />
           </div>
-          <DataSaverButton onClick={() => setDataSaver(true)} />
           <InfoButton />
           <ThemeToggle />
         </div>
@@ -849,7 +865,7 @@ export default function Home() {
           )}
         </div>
 
-        <WidgetsBar />
+        <WidgetsBar enabled={enabledWidgets} />
       </main>
 
       {/* Resizer: player ↔ queue */}
@@ -928,7 +944,7 @@ export default function Home() {
         onClose={closePicker}
       />
 
-      <MemoryStatsButton />
+      {floatingButtons}
     </div>
   );
 }

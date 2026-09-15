@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Database, X } from "lucide-react";
 import { Brand } from "@/components/brand";
+import { FAB_CLASS } from "@/components/fab";
 import {
   Dialog,
   DialogContent,
@@ -128,13 +129,13 @@ export function MemoryStatsButton() {
 
   return (
     <>
-      {/* Floating button — bottom-right, clear of the bottom-left memory FAB */}
+      {/* Floating button — positioned by the parent's bottom-right FAB row */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label="Memory usage"
         title="Memory usage"
-        className="fixed bottom-4 right-4 z-40 grid h-12 w-12 place-items-center rounded-full border-[3px] border-black bg-white text-black shadow-[3px_3px_0_0_#000] transition-transform hover:-translate-x-px hover:-translate-y-px active:translate-x-px active:translate-y-px active:shadow-none dark:border-zinc-100 dark:bg-zinc-900 dark:text-zinc-100 dark:shadow-[3px_3px_0_0_rgba(255,255,255,0.9)]"
+        className={FAB_CLASS}
       >
         <Database className="h-5 w-5" strokeWidth={2.5} />
       </button>
