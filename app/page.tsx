@@ -15,6 +15,7 @@ import { InfoButton } from "@/components/info-button";
 import { MobileLayout } from "@/components/mobile-layout";
 import { WidgetsBar } from "@/components/widgets/widgets-bar";
 import { MemoryStatsButton } from "@/components/memory-stats-button";
+import { DataSaverButton, DataSaverLayout } from "@/components/data-saver-layout";
 import {
   CategoryPickerModal,
   type PendingVideo,
@@ -137,6 +138,12 @@ export default function Home() {
   const [sidebarSplit, setSidebarSplit] = usePersistedValue(
     "tubestack:sidebarSplit:v1",
     0.4
+  );
+
+  // Data saver: stripped-down view (player + plain list) to cut memory/data.
+  const [dataSaver, setDataSaver] = usePersistedValue(
+    "tubestack:dataSaver:v1",
+    false
   );
 
   const handleSplitDrag = useCallback(
@@ -660,6 +667,52 @@ export default function Home() {
 
   /* ---------- Render ---------- */
 
+  // Wait for persisted prefs so data-saver users never mount the full UI
+  // (thumbnails, widgets, player iframe) only to tear it down a frame later.
+  // The splash screen covers this first frame anyway.
+  if (!hydrated) {
+    return <div className="h-dvh w-full bg-stone-100 dark:bg-zinc-950" />;
+  }
+
+  if (dataSaver) {
+    return (
+      <>
+        <DataSaverLayout
+          hydrated={hydrated}
+          categories={categories}
+          counts={counts}
+          totalCount={videos.length}
+          activeCategoryId={activeCategoryId}
+          filteredVideos={filteredVideos}
+          activeVideo={activeVideo}
+          activeVideoId={activeVideoId}
+          emptyMessage={
+            videos.length === 0
+              ? "No videos yet."
+              : `No videos in ${activeCategoryName}.`
+          }
+          pickerLoading={pickerLoading}
+          onAddUrl={handleAddUrl}
+          onSelectCategory={selectCategory}
+          onSelectVideo={selectVideo}
+          onCompleteVideo={completeVideo}
+          onRemoveVideo={removeVideo}
+          onProgress={handleProgress}
+          onEnded={handleEnded}
+          onExit={() => setDataSaver(false)}
+        />
+        <CategoryPickerModal
+          open={pickerOpen}
+          loading={pickerLoading}
+          pending={pendingVideo}
+          categories={categories}
+          onPick={handlePickCategory}
+          onClose={closePicker}
+        />
+      </>
+    );
+  }
+
   if (isMobile) {
     return (
       <>
@@ -692,6 +745,7 @@ export default function Home() {
           onReorderVideos={reorderVideos}
           onProgress={handleProgress}
           onEnded={handleEnded}
+          onEnterDataSaver={() => setDataSaver(true)}
         />
         <CategoryPickerModal
           open={pickerOpen}
@@ -740,6 +794,7 @@ export default function Home() {
           <div className="min-w-0 flex-1">
             <AddVideoBar loading={pickerLoading} onSubmit={handleAddUrl} />
           </div>
+          <DataSaverButton onClick={() => setDataSaver(true)} />
           <InfoButton />
           <ThemeToggle />
         </div>

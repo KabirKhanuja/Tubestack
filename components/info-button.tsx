@@ -29,6 +29,10 @@ const FEATURES: [string, string][] = [
     "Memory",
     "floating button (bottom right) shows exactly how much localStorage Tubestack is using, broken down by folder",
   ],
+  [
+    "Data saver",
+    "feather button in the top bar strips everything down to the player and a plain list, using less memory and data; \"Normal view\" switches back",
+  ],
   ["Pomodoro", "built-in focus timer with sound alert when done"],
   ["To-do", "quick task list that lives alongside your videos"],
   ["Random Joke", "because why not"],

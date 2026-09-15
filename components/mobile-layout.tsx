@@ -16,6 +16,7 @@ import { MemoryModal } from "@/components/memory-modal";
 import { useConfirm } from "@/components/confirm-modal";
 import { CategoryRenamePopover } from "@/components/category-rename-popover";
 import { WidgetsBar } from "@/components/widgets/widgets-bar";
+import { DataSaverButton } from "@/components/data-saver-layout";
 import { canonicalUrl } from "@/lib/youtube";
 import { CATEGORY_COLORS, type Category, type Video } from "@/lib/types";
 
@@ -44,6 +45,7 @@ type Props = {
   onReorderVideos: (fromId: string, toId: string) => void;
   onProgress: (currentSeconds: number, durationSeconds: number) => void;
   onEnded: () => void;
+  onEnterDataSaver: () => void;
 };
 
 export function MobileLayout(props: Props) {
@@ -95,6 +97,7 @@ export function MobileLayout(props: Props) {
             onSubmit={props.onAddUrl}
           />
         </div>
+        <DataSaverButton onClick={props.onEnterDataSaver} />
         <InfoButton />
         <ThemeToggle />
       </div>
